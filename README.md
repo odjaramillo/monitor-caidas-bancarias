@@ -10,6 +10,7 @@ Proyecto integrador de Computación en la Nube (INFO-02028), UCAB, 2026.
 | Documento                                                    | Qué tiene                                                    |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [Enunciado](docs/enunciado/enunciado-proyecto-nube-ucab.pdf) | El enunciado oficial del profesor                            |
+| [Propuesta](docs/propuesta.md)                               | La propuesta del equipo: problema, MVP, arquitectura y roles |
 | [Requisitos](docs/requisitos.md)                             | Cada requisito con su fuente, su corte, su issue y su estado |
 | [Decisiones](docs/decisiones.md)                             | Qué se eligió, por qué y qué se descartó                     |
 
@@ -40,8 +41,25 @@ Navegador ──> Frontend (SvelteKit estático, CDN de Vercel)
 apps/
   api/   API en Fastify con TypeScript, empaquetada con Docker
   web/   Frontend en SvelteKit, compilado a archivos estáticos
-docs/    Enunciado, requisitos y decisiones
+docs/    Enunciado, propuesta, requisitos y decisiones
 ```
+
+## Equipo
+
+Cada integrante es dueño de una pieza y la defiende de punta a punta. Todos explican también el
+flujo completo. Los roles salen de la sección 9 de la [propuesta](docs/propuesta.md), y cada uno
+coincide con un label `area:`.
+
+| Rol                    | Qué defiende                                                                       | Label             | Integrante |
+| ---------------------- | ---------------------------------------------------------------------------------- | ----------------- | ---------- |
+| Frontend               | Pantallas de estado, reporte y detalle; carga rápida en un teléfono con mala señal | `area:web`        | Por elegir |
+| API e ingesta          | Recibir reportes, validarlos, frenar el abuso y el contrato de la API              | `area:api`        | Por elegir |
+| Worker y detección     | Ventanas de tiempo, línea base por hora y el umbral que decide "problema"          | `area:worker`     | Por elegir |
+| Datos y caché          | Esquema en PostgreSQL, Redis, qué tiene estado y qué pasa si cae cada uno          | `area:datos`      | Por elegir |
+| Plataforma y operación | Docker, CI/CD, secretos, monitoreo, prueba de carga e IaC                          | `area:plataforma` | Por elegir |
+
+Cada integrante elige su rol, pone su usuario de GitHub en esta tabla en un PR y se asigna los
+issues de su label.
 
 ## Requisitos para desarrollar
 
@@ -100,7 +118,7 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 
 - `type:` dice qué es el trabajo: `feat`, `bug`, `chore` o `docs`.
 - `area:` dice qué pieza toca: `web`, `api`, `worker`, `datos` o `plataforma`. Coincide con los roles
-  del equipo.
+  de la sección [Equipo](#equipo).
 - Un milestone por entrega: **Corte 1** (30 oct), **Corte 2** (11 dic) y **Entrega final** (16 dic).
 - No hay labels de estado. Un issue está abierto o cerrado; el avance de cada requisito vive en
   `docs/requisitos.md`.

@@ -5,7 +5,7 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 
 - **Fuentes.** `E#` sale del enunciado del profesor
   ([`enunciado/enunciado-proyecto-nube-ucab.pdf`](enunciado/enunciado-proyecto-nube-ucab.pdf));
-  la columna Fuente da la página. `R#` sale de la propuesta del equipo.
+  la columna Fuente da la página. `R#` sale de la [propuesta del equipo](propuesta.md).
 - **Estado.** `pendiente`, `parcial` o `hecho`. Un requisito pasa a `hecho` cuando se fusiona
   el PR que lo cumple y la evidencia está enlazada.
 - **Si el enunciado y este archivo no coinciden, gana el enunciado.** Corrige este archivo en un PR.
@@ -60,7 +60,7 @@ Estas reglas aplican siempre y no tienen issue propio:
 | R3  | Detalle por banco: reportes de las últimas 24 horas como origen y como destino, y los pares más afectados                                    | 2     | #18, #25, #29                            | pendiente |
 | R4  | Nunca decir "el banco está caído"; decir "N personas reportan problemas con … en los últimos 15 minutos"                                     | 1     | #6, #7, #15                              | pendiente |
 | R5  | Frenar el abuso: límite por dispositivo e IP, CAPTCHA invisible y respuesta 429                                                              | 2     | #27, #30                                 | pendiente |
-| R6  | Seguir funcionando si cae PostgreSQL, Redis, el worker o el CAPTCHA (plan de la sección 7 de la propuesta)                                   | 2     | #26, #31, #34, #38, #54                  | pendiente |
+| R6  | Seguir funcionando si cae PostgreSQL, Redis, el worker o el CAPTCHA (plan de la sección 7 de la [propuesta](propuesta.md))                   | 2     | #26, #31, #34, #38, #54                  | pendiente |
 | R7  | Responder "¿dónde se rompe este pago?" en menos de 5 segundos, en un teléfono con mala señal                                                 | 1     | #7, #16, #18                             | pendiente |
 | R8  | Quincena simulada con k6: de 5 a 500 lecturas y 50 reportes por segundo en 10 minutos, con un banco caído                                    | 2     | #45, #66                                 | pendiente |
 
