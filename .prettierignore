@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+dist
+coverage
+.svelte-kit
+apps/web/build

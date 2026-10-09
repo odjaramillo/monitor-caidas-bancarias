@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/.svelte-kit
+**/build
+.git
+.github
+.husky
+.env
+.env.*
+!.env.example
+apps/web

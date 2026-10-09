@@ -1,0 +1,22 @@
+node_modules
+dist
+coverage
+
+# SvelteKit output
+.svelte-kit
+apps/web/build
+.vercel
+
+# Secrets: only the example file is versioned
+.env
+.env.*
+!.env.example
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+.idea
+*.log
+
+# Vite
+vite.config.*.timestamp-*
