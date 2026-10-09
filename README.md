@@ -104,7 +104,8 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 - Un milestone por entrega: **Corte 1** (30 oct), **Corte 2** (11 dic) y **Entrega final** (16 dic).
 - No hay labels de estado. Un issue está abierto o cerrado; el avance de cada requisito vive en
   `docs/requisitos.md`.
-- Los issues de un corte se crean cuando cierra el anterior, no todos por adelantado.
+- Los issues del corte siguiente existen desde el inicio como borrador. Sus criterios se refinan
+  cuando cierra el corte anterior.
 
 ## CI
 
