@@ -1,65 +1,74 @@
 # Monitor de caídas bancarias
 
-A web app that shows where an interbank payment breaks in Venezuela: the source bank, the
-destination bank, or the system that connects them. The data comes from user reports.
+Aplicación web que muestra dónde se rompe un pago entre bancos en Venezuela: el banco de origen,
+el de destino o el sistema que los conecta. La información sale de reportes de los usuarios.
 
-Integrative project for Cloud Computing (Computación en la Nube), UCAB, 2026.
+Proyecto integrador de Computación en la Nube (INFO-02028), UCAB, 2026.
 
-## Architecture
+## Documentos
+
+| Documento                                                    | Qué tiene                                                    |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [Enunciado](docs/enunciado/enunciado-proyecto-nube-ucab.pdf) | El enunciado oficial del profesor                            |
+| [Requisitos](docs/requisitos.md)                             | Cada requisito con su fuente, su corte, su issue y su estado |
+| [Decisiones](docs/decisiones.md)                             | Qué se eligió, por qué y qué se descartó                     |
+
+## Arquitectura
 
 ```
-Browser ──> Frontend (SvelteKit static, Vercel CDN)
-               │
-               ▼
-            API (Fastify, Docker, Render) ── worker (interval in the same process)
-               │                │
-               ▼                ▼
-        Upstash Redis     Supabase PostgreSQL
-   (report stream, cache)  (source of truth)
+Navegador ──> Frontend (SvelteKit estático, CDN de Vercel)
+                 │
+                 ▼
+              API (Fastify, Docker, Render) ── worker (intervalo en el mismo proceso)
+                 │                │
+                 ▼                ▼
+          Upstash Redis     Supabase PostgreSQL
+     (stream, caché, límites)  (fuente de verdad)
 ```
 
-| Piece       | Platform            | Service model |
-| ----------- | ------------------- | ------------- |
-| Frontend    | Vercel Hobby        | PaaS          |
-| API, worker | Render (Docker)     | PaaS          |
-| Database    | Supabase PostgreSQL | DBaaS         |
-| Cache       | Upstash Redis       | DBaaS         |
-| CI          | GitHub Actions      | SaaS          |
+| Pieza         | Plataforma          | Modelo de servicio |
+| ------------- | ------------------- | ------------------ |
+| Frontend      | Vercel Hobby        | PaaS               |
+| API, worker   | Render (Docker)     | PaaS               |
+| Base de datos | Supabase PostgreSQL | DBaaS              |
+| Caché         | Upstash Redis       | DBaaS              |
+| CI            | GitHub Actions      | SaaS               |
 
-## Repository layout
+## Estructura
 
 ```
 apps/
-  api/   Fastify API in TypeScript, packaged with Docker
-  web/   SvelteKit frontend, built to static files
+  api/   API en Fastify con TypeScript, empaquetada con Docker
+  web/   Frontend en SvelteKit, compilado a archivos estáticos
+docs/    Enunciado, requisitos y decisiones
 ```
 
-## Requirements
+## Requisitos para desarrollar
 
-- Node.js 24 (see `.node-version`)
-- pnpm 11 (`corepack enable` installs the version in `package.json`)
-- Docker, to build the API image
+- Node.js 24 (ver `.node-version`)
+- pnpm 11 (`corepack enable` instala la versión de `package.json`)
+- Docker, para construir la imagen de la API
 
-## Getting started
+## Cómo empezar
 
 ```sh
 pnpm install
-cp .env.example .env   # fill in the values; never commit .env
-pnpm dev               # API on :3000, frontend on :5173
+cp .env.example .env   # llena los valores; nunca subas .env
+pnpm dev               # API en :3000, frontend en :5173
 ```
 
 ## Scripts
 
-| Command          | What it does                                       |
+| Comando          | Qué hace                                           |
 | ---------------- | -------------------------------------------------- |
-| `pnpm dev`       | Runs the API and the frontend in watch mode        |
-| `pnpm lint`      | ESLint and the Prettier check                      |
-| `pnpm format`    | Formats every file with Prettier                   |
-| `pnpm typecheck` | `tsc` for the API, `svelte-check` for the frontend |
+| `pnpm dev`       | Corre la API y el frontend y recarga al guardar    |
+| `pnpm lint`      | ESLint y la revisión de formato de Prettier        |
+| `pnpm format`    | Formatea todos los archivos con Prettier           |
+| `pnpm typecheck` | `tsc` para la API, `svelte-check` para el frontend |
 | `pnpm test`      | Vitest                                             |
-| `pnpm build`     | Compiles the API and builds the static frontend    |
+| `pnpm build`     | Compila la API y genera el frontend estático       |
 
-Build and run the API image from the repository root:
+Para construir y correr la imagen de la API desde la raíz del repositorio:
 
 ```sh
 docker build -f apps/api/Dockerfile -t mcb-api .
@@ -67,21 +76,44 @@ docker run --rm -p 3000:3000 mcb-api
 curl localhost:3000/health   # {"status":"ok"}
 ```
 
-## How we work
+## Cómo trabajamos
 
-- Every change goes through a pull request to `main`. CI must pass before the merge.
-- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org):
-  `feat(api): accept bank reports`. A Git hook rejects other formats, and CI checks them again.
-- Before each commit, a hook runs ESLint and Prettier on the staged files.
-- Set your own Git identity (`git config user.name`, `git config user.email`), so the history
-  shows each member's work.
-- Secrets live only in the platform settings and in your local `.env`. CI runs gitleaks on every
-  push.
+1. **Todo empieza en un issue.** Usa la plantilla Tarea o Bug. Cada issue cita su requisito (`E#` o
+   `R#`) y tiene criterios de aceptación. Asígnatelo antes de empezar.
+2. **Una rama por issue**: `<usuario>/<numero>-<tema>`, por ejemplo `oscar/5-post-reports`.
+3. **Commits en inglés con [Conventional Commits](https://www.conventionalcommits.org)**:
+   `feat(api): accept bank reports`. Un hook de Git rechaza otros formatos y el CI los revisa de
+   nuevo. Antes de cada commit, otro hook corre ESLint y Prettier sobre los archivos preparados.
+4. **Un PR por issue, con `Closes #N` en inglés.** "Cierra #N" no cierra el issue. Un PR sin issue
+   lleva `[sin-issue]`. El CI rechaza el PR si no tiene ninguno de los dos.
+5. **`main` está protegida.** Solo entra por PR, con el CI en verde.
+6. **Si el PR cumple un requisito, actualiza su estado** en `docs/requisitos.md` en el mismo PR.
+7. **Cada integrante usa su propia identidad de Git** (`git config user.name` y `user.email`).
+   El historial es la evidencia del aporte de cada uno.
+
+Idioma: docs, issues y PR en español; código, identificadores y commits en inglés (D9 en
+[decisiones](docs/decisiones.md)).
+
+Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre gitleaks en cada PR.
+
+### Labels y milestones
+
+- `type:` dice qué es el trabajo: `feat`, `bug`, `chore` o `docs`.
+- `area:` dice qué pieza toca: `web`, `api`, `worker`, `datos` o `plataforma`. Coincide con los roles
+  del equipo.
+- Un milestone por entrega: **Corte 1** (30 oct), **Corte 2** (11 dic) y **Entrega final** (16 dic).
+- No hay labels de estado. Un issue está abierto o cerrado; el avance de cada requisito vive en
+  `docs/requisitos.md`.
+- Los issues de un corte se crean cuando cierra el anterior, no todos por adelantado.
 
 ## CI
 
-`.github/workflows/ci.yml` runs on every pull request and every push to `main`:
+`.github/workflows/ci.yml` corre en cada PR y en cada push a `main`:
 
-1. `checks`: install with the lockfile, commit messages, lint, typecheck, tests, build.
-2. `docker`: builds the API image.
-3. `secrets`: gitleaks scans the full history.
+1. `checks`: instala con el lockfile, revisa los mensajes de commit, lint, typecheck, pruebas y build.
+2. `docker`: construye la imagen de la API.
+3. `secrets`: gitleaks revisa todo el historial.
+
+`.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
+
+4. `issue`: exige `Closes #N` o `[sin-issue]`.
