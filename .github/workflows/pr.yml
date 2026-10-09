@@ -1,0 +1,21 @@
+name: PR
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: El PR enlaza su issue
+        env:
+          BODY: ${{ github.event.pull_request.body }} # read from env, never interpolated into the script
+        run: |
+          if printf '%s' "$BODY" | grep -Eiq '\b(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+|\[sin-issue\]'; then
+            exit 0
+          fi
+          echo "::error::El PR debe incluir 'Closes #N' (en inglés) o '[sin-issue]'."
+          exit 1
