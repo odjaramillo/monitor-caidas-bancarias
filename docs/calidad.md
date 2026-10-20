@@ -28,18 +28,18 @@ que el control falla: un control que nunca falla no prueba nada.
 | La cobertura no baja                            | `thresholds` de Vitest iguales a la medición del 2026-10-20 | CI (`checks`: `pnpm test`)        | Código nuevo sin pruebas                                    | 2026-10-20: quitar `layout.test.ts` da exit 1 en el frontend; una función sin prueba da exit 1 en la API (#70) |
 | La aplicación compila                           | `pnpm build`                                                | CI (`checks`)                     | Un build roto antes de llegar a Vercel o Render             | Sin prueba negativa todavía                                                                                    |
 | La imagen de la API se construye                | `docker/build-push-action`                                  | CI (`docker`)                     | Un Dockerfile roto antes de llegar a Render                 | Sin prueba negativa todavía                                                                                    |
+| La imagen de la API arranca y responde          | Arrancar la imagen y exigir `{"status":"ok"}` en `/health`  | CI (`docker`)                     | Una imagen que compila pero no arranca o no responde        | 2026-10-20: una imagen cuyo `CMD` termina con error da exit 1 en 30 s (#80)                                    |
+| `compose.yaml` es válido                        | `docker compose config -q`                                  | CI (`docker`)                     | Un `compose.yaml` roto que rompe el entorno local de todos  | 2026-10-20: un `compose.yaml` con YAML roto da exit 1 (#80)                                                    |
 | Ningún secreto en el repositorio                | gitleaks sobre todo el historial                            | CI (`secrets`)                    | Un token o una contraseña subidos por error                 | 2026-10-20: un repo temporal con un token falso de GitHub da "leaks found: 1" y exit 1                         |
 | Sin vulnerabilidades altas en producción        | `pnpm audit --prod --audit-level high`                      | CI (`checks`)                     | Una dependencia de producción con un aviso alto o crítico   | 2026-10-20: un proyecto temporal con `lodash@4.17.15` da 3 avisos altos y exit 1 (#70)                         |
 
 ## Controles en camino
 
-| Regla                                  | Control previsto                                           | Estado                           |
-| -------------------------------------- | ---------------------------------------------------------- | -------------------------------- |
-| `compose.yaml` es válido               | `docker compose config -q` en el job `docker`              | PR #81 (#80), espera a #76       |
-| La imagen de la API arranca y responde | Arrancar la imagen y exigir `{"status":"ok"}` en `/health` | PR #81 (#80), espera a #76       |
-| Un PR entra al día con `main`          | `strict` en la protección de `main`                        | Decidido en D14; falta aplicarlo |
-| Un despliegue en verde responde        | Prueba del `/health` después de cada despliegue            | #41 (Corte 2)                    |
-| Las dependencias se actualizan         | Dependabot mensual                                         | #46 (Corte 2)                    |
+| Regla                           | Control previsto                                | Estado                           |
+| ------------------------------- | ----------------------------------------------- | -------------------------------- |
+| Un PR entra al día con `main`   | `strict` en la protección de `main`             | Decidido en D14; falta aplicarlo |
+| Un despliegue en verde responde | Prueba del `/health` después de cada despliegue | #41 (Corte 2)                    |
+| Las dependencias se actualizan  | Dependabot mensual                              | #46 (Corte 2)                    |
 
 ## Reglas sin control: convenciones aceptadas
 
