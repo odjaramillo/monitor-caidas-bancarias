@@ -46,6 +46,14 @@ docs/    Enunciado, propuesta, requisitos y decisiones
 
 ## Equipo
 
+Integrantes:
+
+- Oscar Jaramillo
+- Fernando Liendo
+- Luis Torres
+- Juan Brillembourg
+- Ivifer Pita
+
 Cada integrante es dueño de una pieza y la defiende de punta a punta. Todos explican también el
 flujo completo. Los roles salen de la sección 9 de la [propuesta](docs/propuesta.md), y cada uno
 coincide con un label `area:`.
