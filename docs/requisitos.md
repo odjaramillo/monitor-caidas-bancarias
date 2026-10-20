@@ -26,7 +26,7 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 | E10 | CI/CD o automatización equivalente funcionando                                                                     | p. 3, p. 5 | 2     | #28, #41, #46, #60, #70, #71                  | parcial   |
 | E11 | Secretos fuera del código; ninguna credencial en el repositorio                                                    | p. 3, p. 8 | 1     | #3, #20, #71                                  | parcial   |
 | E12 | Logs, monitoreo de errores y estado del servicio visibles                                                          | p. 3, p. 5 | 2     | #42, #43, #44, #60                            | pendiente |
-| E13 | Medidas mínimas de seguridad                                                                                       | p. 5       | 2     | #27, #30, #32, #46, #57                       | pendiente |
+| E13 | Medidas mínimas de seguridad                                                                                       | p. 5       | 2     | #27, #30, #32, #46, #57, #70                  | parcial   |
 | E14 | Análisis de cuellos de botella y propuesta ante demanda masiva                                                     | p. 3, p. 5 | 2     | #31, #34, #36, #39, #45, #58                  | pendiente |
 | E15 | Infraestructura como código (opcional, bonificación)                                                               | p. 3       | Final | #60, #63, #64                                 | pendiente |
 | E16 | Informe técnico final en PDF con las 16 secciones mínimas                                                          | p. 6       | Final | #55, #56, #57, #58, #59, #60, #61, #62, #68   | pendiente |
@@ -39,8 +39,11 @@ Evidencia de lo que ya está `parcial`:
 - **E6.** `apps/api/Dockerfile` existe; el CI construye la imagen, la arranca y exige que `/health` responda
   (#80). `compose.yaml` levanta PostgreSQL y Redis en local (#19, #54). Faltan el despliegue (#8) y la explicación (#9).
 - **E10.** El CI corre lint, typecheck, pruebas, build de Docker y gitleaks en cada PR. Las pruebas cubren la API y el
-  frontend, y `pnpm test` falla si un proyecto no tiene ninguna (#78). Falta el despliegue automático.
+  frontend, y `pnpm test` falla si un proyecto no tiene ninguna (#78) o si su cobertura baja del piso medido (#70).
+  Falta el despliegue automático.
 - **E11.** Solo se versiona `.env.example`, y gitleaks revisa el historial en cada PR.
+- **E13.** El CI falla si una dependencia de producción tiene una vulnerabilidad alta o crítica (`pnpm audit`, #70).
+  Faltan las medidas de la API: validación, límites y cabeceras.
 
 ### Prácticas no aceptables (p. 8)
 
