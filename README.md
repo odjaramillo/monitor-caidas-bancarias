@@ -12,6 +12,7 @@ Proyecto integrador de Computación en la Nube (INFO-02028), UCAB, 2026.
 | [Enunciado](docs/enunciado/enunciado-proyecto-nube-ucab.pdf) | El enunciado oficial del profesor                            |
 | [Propuesta](docs/propuesta.md)                               | La propuesta del equipo: problema, MVP, arquitectura y roles |
 | [Requisitos](docs/requisitos.md)                             | Cada requisito con su fuente, su corte, su issue y su estado |
+| [Calidad](docs/calidad.md)                                   | Qué control hace cumplir cada regla y la prueba de que falla |
 | [Decisiones](docs/decisiones.md)                             | Qué se eligió, por qué y qué se descartó                     |
 
 ## Arquitectura
@@ -112,7 +113,7 @@ docker compose exec redis redis-cli
 | `pnpm lint`      | ESLint y la revisión de formato de Prettier        |
 | `pnpm format`    | Formatea todos los archivos con Prettier           |
 | `pnpm typecheck` | `tsc` para la API, `svelte-check` para el frontend |
-| `pnpm test`      | Vitest                                             |
+| `pnpm test`      | Vitest, con cobertura y su piso                    |
 | `pnpm build`     | Compila la API y genera el frontend estático       |
 
 Para construir y correr la imagen de la API desde la raíz del repositorio:
@@ -165,3 +166,13 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
 
 4. `issue`: exige `Closes #N` o `[sin-issue]`.
+
+### Cobertura y dependencias
+
+- `pnpm test` mide la cobertura de cada proyecto y falla si baja del piso. El piso está en
+  `thresholds`, en `apps/api/vitest.config.ts` y en `apps/web/vite.config.ts`, con la fecha y el
+  commit de la medición.
+- Cuando tu PR sube la cobertura, sube también el piso a los números nuevos que imprime
+  `pnpm test`. Nunca lo bajes para que el CI pase: escribe la prueba que falta.
+- `checks` también corre `pnpm audit --prod --audit-level high` y falla si una dependencia de
+  producción tiene una vulnerabilidad alta o crítica.
