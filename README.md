@@ -12,6 +12,7 @@ Proyecto integrador de Computación en la Nube (INFO-02028), UCAB, 2026.
 | [Enunciado](docs/enunciado/enunciado-proyecto-nube-ucab.pdf) | El enunciado oficial del profesor                            |
 | [Propuesta](docs/propuesta.md)                               | La propuesta del equipo: problema, MVP, arquitectura y roles |
 | [Requisitos](docs/requisitos.md)                             | Cada requisito con su fuente, su corte, su issue y su estado |
+| [Calidad](docs/calidad.md)                                   | Qué control hace cumplir cada regla y la prueba de que falla |
 | [Decisiones](docs/decisiones.md)                             | Qué se eligió, por qué y qué se descartó                     |
 
 ## Arquitectura
