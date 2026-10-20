@@ -91,7 +91,7 @@ pnpm dev               # API en :3000, frontend en :5173
 | `pnpm lint`      | ESLint y la revisión de formato de Prettier        |
 | `pnpm format`    | Formatea todos los archivos con Prettier           |
 | `pnpm typecheck` | `tsc` para la API, `svelte-check` para el frontend |
-| `pnpm test`      | Vitest                                             |
+| `pnpm test`      | Vitest, con cobertura y su piso                    |
 | `pnpm build`     | Compila la API y genera el frontend estático       |
 
 Para construir y correr la imagen de la API desde la raíz del repositorio:
@@ -144,3 +144,13 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
 
 4. `issue`: exige `Closes #N` o `[sin-issue]`.
+
+### Cobertura y dependencias
+
+- `pnpm test` mide la cobertura de cada proyecto y falla si baja del piso. El piso está en
+  `thresholds`, en `apps/api/vitest.config.ts` y en `apps/web/vite.config.ts`, con la fecha y el
+  commit de la medición.
+- Cuando tu PR sube la cobertura, sube también el piso a los números nuevos que imprime
+  `pnpm test`. Nunca lo bajes para que el CI pase: escribe la prueba que falta.
+- `checks` también corre `pnpm audit --prod --audit-level high` y falla si una dependencia de
+  producción tiene una vulnerabilidad alta o crítica.
