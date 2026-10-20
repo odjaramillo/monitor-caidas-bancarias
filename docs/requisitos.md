@@ -37,7 +37,8 @@ Evidencia de lo que ya está `parcial`:
 
 - **E1.** README, `.gitignore` y `.env.example` existen. Falta el aporte de todos (#2).
 - **E6.** `apps/api/Dockerfile` existe y el CI lo construye. Faltan el despliegue (#8) y la explicación (#9).
-- **E10.** El CI corre lint, typecheck, pruebas, build de Docker y gitleaks en cada PR. Falta el despliegue automático.
+- **E10.** El CI corre lint, typecheck, pruebas, build de Docker y gitleaks en cada PR. Las pruebas cubren la API y el
+  frontend, y `pnpm test` falla si un proyecto no tiene ninguna (#78). Falta el despliegue automático.
 - **E11.** Solo se versiona `.env.example`, y gitleaks revisa el historial en cada PR.
 
 ### Prácticas no aceptables (p. 8)
