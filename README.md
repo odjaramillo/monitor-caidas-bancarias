@@ -159,7 +159,8 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 `.github/workflows/ci.yml` corre en cada PR y en cada push a `main`:
 
 1. `checks`: instala con el lockfile, revisa los mensajes de commit, lint, typecheck, pruebas y build.
-2. `docker`: construye la imagen de la API.
+2. `docker`: valida `compose.yaml`, construye la imagen de la API, la arranca y exige que `/health`
+   responda `{"status":"ok"}` en 30 s.
 3. `secrets`: gitleaks revisa todo el historial.
 
 `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:

@@ -38,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - name: compose.yaml is valid
+        run: docker compose config -q
       - uses: docker/setup-buildx-action@v4
       - name: Build the API image
         uses: docker/build-push-action@v7
@@ -45,6 +47,21 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           push: false
+          load: true # the next step runs the image
+          tags: mcb-api:ci
+      - name: The API image boots and answers /health
+        run: |
+          docker run -d --name api -p 3000:3000 mcb-api:ci
+          # The server needs a few seconds to start. Wait up to 30 s.
+          for _ in $(seq 1 30); do
+            if [ "$(curl -fsS http://localhost:3000/health 2>/dev/null)" = '{"status":"ok"}' ]; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::The API image did not answer /health with {\"status\":\"ok\"} in 30 s."
+          docker logs api
+          exit 1
 
   secrets:
     runs-on: ubuntu-latest
