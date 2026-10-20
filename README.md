@@ -79,8 +79,29 @@ issues de su label.
 
 ```sh
 pnpm install
-cp .env.example .env   # llena los valores; nunca subas .env
+cp .env.example .env   # trae los valores locales; nunca subas .env
+docker compose up -d   # PostgreSQL en :5432 y Redis en :6379
 pnpm dev               # API en :3000, frontend en :5173
+```
+
+### Servicios locales
+
+`compose.yaml` levanta PostgreSQL 17 (la misma versión mayor que Supabase) y Redis 7 (en lugar de
+Upstash). Así nadie pisa los datos de otro ni gasta la cuota de Upstash mientras desarrolla. Los
+puertos solo escuchan en `localhost`.
+
+| Comando                  | Qué hace                                                   |
+| ------------------------ | ---------------------------------------------------------- |
+| `docker compose up -d`   | Levanta los dos servicios en segundo plano                 |
+| `docker compose ps`      | Muestra si cada servicio está `healthy`                    |
+| `docker compose stop`    | Los detiene y conserva los datos                           |
+| `docker compose down -v` | Los borra junto con sus datos (`-v` elimina los volúmenes) |
+
+Para entrar a cada uno:
+
+```sh
+docker compose exec postgres psql -U mcb -d mcb
+docker compose exec redis redis-cli
 ```
 
 ## Scripts
