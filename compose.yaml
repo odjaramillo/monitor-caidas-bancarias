@@ -1,0 +1,38 @@
+# Local services for development only. Production uses Supabase and Upstash.
+# The credentials below are local defaults. They never reach a deployed service.
+
+services:
+  postgres:
+    # Same major version as the Supabase project (issue #19).
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: mcb
+      POSTGRES_PASSWORD: mcb
+      POSTGRES_DB: mcb
+    ports:
+      # Bind to localhost only, so other machines on the network cannot reach the database.
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mcb -d mcb']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    # Upstash speaks the Redis protocol, so a plain Redis server stands in for it locally (issue #54).
+    image: redis:7-alpine
+    ports:
+      - '127.0.0.1:6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
