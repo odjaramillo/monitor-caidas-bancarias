@@ -58,13 +58,13 @@ Cada integrante es dueño de una pieza y la defiende de punta a punta. Todos exp
 flujo completo. Los roles salen de la sección 9 de la [propuesta](docs/propuesta.md), y cada uno
 coincide con un label `area:`.
 
-| Rol                    | Qué defiende                                                                       | Label             | Integrante |
-| ---------------------- | ---------------------------------------------------------------------------------- | ----------------- | ---------- |
-| Frontend               | Pantallas de estado, reporte y detalle; carga rápida en un teléfono con mala señal | `area:web`        | Por elegir |
-| API e ingesta          | Recibir reportes, validarlos, frenar el abuso y el contrato de la API              | `area:api`        | Por elegir |
-| Worker y detección     | Ventanas de tiempo, línea base por hora y el umbral que decide "problema"          | `area:worker`     | Por elegir |
-| Datos y caché          | Esquema en PostgreSQL, Redis, qué tiene estado y qué pasa si cae cada uno          | `area:datos`      | Por elegir |
-| Plataforma y operación | Docker, CI/CD, secretos, monitoreo, prueba de carga e IaC                          | `area:plataforma` | Por elegir |
+| Rol                    | Qué defiende                                                                       | Label             | Integrante        |
+| ---------------------- | ---------------------------------------------------------------------------------- | ----------------- | ----------------- |
+| Frontend               | Pantallas de estado, reporte y detalle; carga rápida en un teléfono con mala señal | `area:web`        | Ivifer Pita       |
+| API e ingesta          | Recibir reportes, validarlos, frenar el abuso y el contrato de la API              | `area:api`        | Luis Torres       |
+| Worker y detección     | Ventanas de tiempo, línea base por hora y el umbral que decide "problema"          | `area:worker`     | Fernando Liendo   |
+| Datos y caché          | Esquema en PostgreSQL, Redis, qué tiene estado y qué pasa si cae cada uno          | `area:datos`      | Juan Brillembourg |
+| Plataforma y operación | Docker, CI/CD, secretos, monitoreo, prueba de carga e IaC                          | `area:plataforma` | Oscar Jaramillo   |
 
 Cada integrante elige su rol, pone su usuario de GitHub en esta tabla en un PR y se asigna los
 issues de su label.
