@@ -13,6 +13,7 @@ Proyecto integrador de Computación en la Nube (INFO-02028), UCAB, 2026.
 | [Propuesta](docs/propuesta.md)                               | La propuesta del equipo: problema, MVP, arquitectura y roles     |
 | [Arquitectura](docs/arquitectura.md)                         | Cada componente, cómo se comunica y su modelo de servicio        |
 | [Requisitos](docs/requisitos.md)                             | Cada requisito con su fuente, su corte, su issue y su estado     |
+| [Contrato de la API](docs/api.md)                            | Qué entra y qué sale de cada endpoint, con ejemplos JSON         |
 | [Contenedor](docs/contenedor.md)                             | La imagen de la API: etapas, puerto, variables y cómo ejecutarla |
 | [Calidad](docs/calidad.md)                                   | Qué control hace cumplir cada regla y la prueba de que falla     |
 | [Decisiones](docs/decisiones.md)                             | Qué se eligió, por qué y qué se descartó                         |
