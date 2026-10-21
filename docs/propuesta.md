@@ -115,14 +115,14 @@ concreta: el plan gratuito de Supabase solo acepta 15 conexiones a la vez. El wo
 reportes por lotes y publica el estado de cada par de bancos. Si Redis cae, la API escribe directo
 en PostgreSQL (ver sección 7).
 
-| Pieza       | Elegido                                              | Por qué                                                                                                                                        | Descartado                                                                          |
-| ----------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Frontend    | SvelteKit estático (adapter-static) en Vercel        | Archivos fijos servidos por CDN (red de distribución de contenido): absorben el pico sin ejecutar código, y la API queda como el único backend | SvelteKit con servidor: dos backends que defender                                   |
-| Backend     | Fastify (TypeScript) en Docker                       | Mismo lenguaje que el frontend, liviano para los 512 MB del plan gratuito, validación con JSON Schema                                          | NestJS: su estructura sobra para 5 endpoints. Go: aprenderlo choca con el Parcial 1 |
-| Worker      | Intervalo dentro del proceso de la API               | Cabe en el único servicio gratuito de Render                                                                                                   | Servicio aparte: no tiene plan gratuito                                             |
-| Datos       | PostgreSQL en Supabase y Redis en Upstash            | Administrados y gratuitos                                                                                                                      | —                                                                                   |
-| Repositorio | Público en GitHub                                    | GitHub Actions gratis                                                                                                                          | Privado                                                                             |
-| Costo       | $0, con Azure for Students como respaldo sin tarjeta | Ningún integrante paga                                                                                                                         | Render Starter ($7/mes); créditos de AWS (piden tarjeta internacional)              |
+| Pieza       | Elegido                                                              | Por qué                                                                                                                                        | Descartado                                                                          |
+| ----------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Frontend    | SvelteKit estático (adapter-static) en Vercel                        | Archivos fijos servidos por CDN (red de distribución de contenido): absorben el pico sin ejecutar código, y la API queda como el único backend | SvelteKit con servidor: dos backends que defender                                   |
+| Backend     | Fastify (TypeScript) en Docker                                       | Mismo lenguaje que el frontend, liviano para los 512 MB del plan gratuito, validación con JSON Schema                                          | NestJS: su estructura sobra para 5 endpoints. Go: aprenderlo choca con el Parcial 1 |
+| Worker      | Intervalo dentro del proceso de la API                               | Cabe en el único servicio gratuito de Render                                                                                                   | Servicio aparte: no tiene plan gratuito                                             |
+| Datos       | PostgreSQL en Supabase y Redis en Upstash                            | Administrados y gratuitos                                                                                                                      | —                                                                                   |
+| Repositorio | Público en GitHub                                                    | GitHub Actions gratis                                                                                                                          | Privado                                                                             |
+| Costo       | $0, sin respaldo sin tarjeta: Azure for Students no nos aceptó (#53) | Ningún integrante paga                                                                                                                         | Render Starter ($7/mes); créditos de AWS (piden tarjeta internacional)              |
 
 ### Qué tiene estado
 
@@ -202,7 +202,7 @@ defensa: sin usuarios reales, es la forma de ver el estado cambiar.
 Todo el proyecto puede costar $0. La API y el worker corren en un solo servicio gratuito de Render.
 Un monitor lo consulta cada 30 s para que no se duerma, y así usa unas 744 de las 750 horas gratis
 del mes. El costo de esa decisión es que no cabe un segundo servicio gratuito. Respaldo sin tarjeta:
-Azure for Students da $100 por estudiante (falta verificar que acepte el correo de la UCAB).
+Azure for Students da $100 por estudiante, pero no calificamos con el correo de la UCAB (verificado el 2026-10-21, #53).
 
 | Pieza                   | Plataforma            | Modelo | Límite del plan gratuito que importa                                                  | Costo                              |
 | ----------------------- | --------------------- | ------ | ------------------------------------------------------------------------------------- | ---------------------------------- |
@@ -264,7 +264,7 @@ monitoreo y la prueba de carga.
 - Revisar qué dice la ley bancaria vigente sobre difundir información de bancos.
 - Validar el enfoque: preguntar a 5 comercios y 5 personas cómo se enteran hoy de una falla en un
   pago.
-- Probar Azure for Students con el correo de la UCAB como respaldo.
+- Azure for Students como respaldo: descartado, no calificamos con el correo de la UCAB (#53).
 
 ## 11. Fuentes
 
