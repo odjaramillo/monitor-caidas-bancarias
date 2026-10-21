@@ -60,24 +60,27 @@ ni tienen secretos, pero sobran.
 - La API escucha en `0.0.0.0`, todas las interfaces de red del contenedor. Si escuchara en
   `127.0.0.1`, solo aceptaría conexiones desde dentro del mismo contenedor, y ni `docker run -p`
   ni Render podrían llegar a ella. Prueba del 2026-10-21: con `-e HOST=127.0.0.1`, `curl` desde
-  la máquina no recibe respuesta; con el valor por defecto responde `{"status":"ok"}`.
+  la máquina no recibe respuesta; con el valor por defecto responde `/health`.
 - `HEALTHCHECK` le pide a Docker que llame a `/health` cada 30 s y marque el contenedor como
   `unhealthy` si no responde. Render no usa esta instrucción: su chequeo se configura en el
   servicio (#8).
 
 ## Variables de entorno
 
-| Variable      | Valor por defecto         | Para qué sirve                                                                                   |
-| ------------- | ------------------------- | ------------------------------------------------------------------------------------------------ |
-| `PORT`        | `3000`                    | Puerto en el que escucha la API. Render lo define.                                               |
-| `HOST`        | `0.0.0.0`                 | Interfaz en la que escucha la API (ver arriba).                                                  |
-| `LOG_LEVEL`   | `info`                    | Nivel de detalle de los logs de Fastify: `debug`, `info`, `warn` o `error`.                      |
-| `CORS_ORIGIN` | sin valor: CORS apagado   | Dominio del frontend que puede llamar a la API desde el navegador, por ejemplo la URL de Vercel. |
-| `NODE_ENV`    | `production` en la imagen | Le dice a las librerías que corren en producción. El Dockerfile la fija; no hace falta pasarla.  |
+| Variable       | Valor por defecto            | Para qué sirve                                                                                   |
+| -------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| `PORT`         | `3000`                       | Puerto en el que escucha la API. Render lo define.                                               |
+| `HOST`         | `0.0.0.0`                    | Interfaz en la que escucha la API (ver arriba).                                                  |
+| `LOG_LEVEL`    | `info`                       | Nivel de detalle de los logs de Fastify: `debug`, `info`, `warn` o `error`.                      |
+| `CORS_ORIGIN`  | sin valor: CORS apagado      | Dominio del frontend que puede llamar a la API desde el navegador, por ejemplo la URL de Vercel. |
+| `NODE_ENV`     | `production` en la imagen    | Le dice a las librerías que corren en producción. El Dockerfile la fija; no hace falta pasarla.  |
+| `DATABASE_URL` | sin valor: la API no arranca | URL de PostgreSQL. En local, la de `compose.yaml`; en producción, la del pooler de Supabase.     |
+| `DB_POOL_MAX`  | `10`                         | Conexiones abiertas a PostgreSQL como máximo, de 1 a 15 (el límite de Supabase).                 |
 
-La URL de PostgreSQL y la de Redis llegan con #20 y #31. Quien las agregue las documenta en esta
-tabla y en `.env.example`. Los valores reales nunca van en la imagen ni en el repositorio: en
-producción viven en las variables del servicio de Render.
+Si falta `DATABASE_URL`, o si `DB_POOL_MAX` no es un número de 1 a 15, la API escribe el motivo y
+termina con código 1 antes de escuchar (#20). La URL de Redis llega con #31; quien la agregue la
+documenta en esta tabla y en `.env.example`. Los valores reales nunca van en la imagen ni en el
+repositorio: en producción viven en las variables del servicio de Render.
 
 ## Construir y ejecutar la imagen en local
 
@@ -85,15 +88,18 @@ Desde la raíz del repositorio:
 
 ```sh
 docker build -f apps/api/Dockerfile -t mcb-api .
-docker run --rm -p 3000:3000 mcb-api
-curl localhost:3000/health   # {"status":"ok"}
+docker compose up -d --wait postgres
+docker run --rm --network host -e DATABASE_URL=postgresql://mcb:mcb@localhost:5432/mcb mcb-api
+curl localhost:3000/health   # {"status":"ok","database":"ok"}
 ```
 
 - `-f apps/api/Dockerfile` indica el Dockerfile; el `.` final es el contexto: la raíz.
-- `-p 3000:3000` publica el puerto 3000 del contenedor en el 3000 de tu máquina.
+- `--network host` deja que el contenedor llegue al PostgreSQL de `compose.yaml` en `localhost` (en
+  Linux). En macOS o Windows usa `-p 3000:3000` y `host.docker.internal` en vez de `localhost` en la URL.
 - `--rm` borra el contenedor al detenerlo.
-- Para pasar una variable: `docker run --rm -p 8080:8080 -e PORT=8080 -e LOG_LEVEL=debug mcb-api`.
+- Para pasar otra variable, agrega otro `-e`, por ejemplo `-e LOG_LEVEL=debug`.
 - `docker ps` muestra el estado del `HEALTHCHECK`: `healthy` o `unhealthy`.
 
-El CI hace lo mismo en cada PR (job `docker`): construye la imagen, la arranca y exige
-`{"status":"ok"}` en `/health` (ver [Calidad](calidad.md)).
+El CI hace lo mismo en cada PR (job `docker`): construye la imagen, comprueba que no arranca sin
+`DATABASE_URL`, la arranca con el PostgreSQL de `compose.yaml` y exige
+`{"status":"ok","database":"ok"}` en `/health` (ver [Calidad](calidad.md)).
