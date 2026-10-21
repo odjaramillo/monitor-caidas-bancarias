@@ -1,4 +1,4 @@
-import { isLocalDatabaseUrl } from '../demo-seed.js';
+import { isLocalDatabaseUrl } from '../database-url.js';
 
 const COMPOSE_DATABASE_URL = 'postgresql://mcb:mcb@localhost:5432/mcb';
 
