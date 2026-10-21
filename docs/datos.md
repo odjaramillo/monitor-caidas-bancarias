@@ -55,5 +55,29 @@ docker compose exec postgres psql -U mcb -d mcb -c '\d reports'
 `pnpm test` aplica las migraciones antes de las pruebas, y `src/schema.test.ts` comprueba los
 bancos, las llaves foráneas, el `check` de `type` y el índice.
 
+## Datos de prueba para la demo
+
+Sin usuarios reales, todos los pares están en "normal". Este comando deja un par en cada nivel (#12):
+
+```sh
+pnpm --filter api seed:demo
+```
+
+| Par                          | Reportes en los últimos 15 minutos | Nivel esperado       |
+| ---------------------------- | ---------------------------------- | -------------------- |
+| Banesco → Mercantil          | 12                                 | `muchos_reportes`    |
+| Banco de Venezuela → Banesco | 2                                  | `posibles_problemas` |
+| Mercantil → BBVA Provincial  | 0 (y 3 de hace más de 15 minutos)  | `normal`             |
+
+- Las fechas son relativas a la hora en que corre el comando: los reportes recientes tienen de 1 a 5
+  minutos. Los niveles duran unos 10 minutos, así que conviene correrlo justo antes de la demo.
+- Reemplaza los reportes de esos tres pares y no toca los demás. Correrlo dos veces da lo mismo.
+- Lee `DATABASE_URL`. Si el host no es `localhost`, `127.0.0.1` ni `[::1]`, o si la URL trae un
+  parámetro `host` o `hostaddr` (`pg` se conecta a ese host y no al de antes de la ruta), pide
+  escribir el nombre del host para continuar; cualquier otra respuesta cancela sin escribir nada. Si
+  la URL no se puede leer, se niega sin mostrarla, porque puede traer la contraseña.
+- Los números asumen los umbrales de #6. Si cambian, se ajusta `DEMO_PAIRS` en
+  `apps/api/src/demo-seed.ts`.
+
 Fuera de este esquema, para el Corte 2: totales por hora y borrado de los reportes crudos a los 30
 días (#39).
