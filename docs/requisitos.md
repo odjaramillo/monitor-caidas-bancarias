@@ -39,7 +39,7 @@ Evidencia de lo que ya está `parcial`:
 - **E3.** [`arquitectura.md`](arquitectura.md) tiene el diagrama con frontend, API, persistencia, caché y servicios
   externos, y cómo se comunica cada componente (#10). Falta mantenerlo actualizado en el Corte 2 (#47) y en el informe (#58).
 - **E6.** `apps/api/Dockerfile` existe; el CI construye la imagen, la arranca y exige que `/health` responda
-  (#80). `compose.yaml` levanta PostgreSQL y Redis en local (#19, #54). Faltan el despliegue (#8) y la explicación (#9).
+  (#80). `compose.yaml` levanta PostgreSQL y Redis en local (#19, #54). [`contenedor.md`](contenedor.md) explica la imagen, el contenedor, el puerto, las variables y la ejecución (#9). Falta el despliegue (#8).
 - **E7.** [`arquitectura.md`](arquitectura.md) da el modelo de servicio de cada pieza (PaaS, DBaaS, SaaS) y por qué
   (#10). Falta llevarlo al informe (#58).
 - **E10.** El CI corre lint, typecheck, pruebas, build de Docker y gitleaks en cada PR. Las pruebas cubren la API y el
