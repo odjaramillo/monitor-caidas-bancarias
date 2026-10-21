@@ -1,6 +1,7 @@
 import cors from '@fastify/cors';
 import Fastify, { type FastifyServerOptions } from 'fastify';
 import type { Db } from './db.js';
+import { reportRoutes } from './reports.js';
 
 export interface AppDeps {
   db: Db;
@@ -9,7 +10,12 @@ export interface AppDeps {
 // buildApp creates the server without listening, so tests can call app.inject().
 // The database arrives as a dependency: tests pass the local database or a fake one.
 export function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}) {
-  const app = Fastify(opts);
+  const app = Fastify({
+    ...opts,
+    // By default Fastify drops unknown fields and turns 42 into "42". The contract answers 400 instead
+    // (docs/api.md), so the body is validated exactly as it arrives.
+    ajv: { customOptions: { removeAdditional: false, coerceTypes: false } }
+  });
 
   app.register(cors, { origin: process.env.CORS_ORIGIN ?? false });
 
@@ -23,6 +29,8 @@ export function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}) {
       return reply.code(503).send({ status: 'error', database: 'unreachable' });
     }
   });
+
+  reportRoutes(app, deps.db);
 
   return app;
 }

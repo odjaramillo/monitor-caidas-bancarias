@@ -66,7 +66,7 @@ Estas reglas aplican siempre y no tienen issue propio:
 | ID  | Requisito                                                                                                                                    | Corte | Issues                                   | Estado    |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------------------- | --------- |
 | R1  | Estado por par de bancos (origen → destino): normal, posibles problemas o muchos reportes, comparando los últimos 15 minutos con lo habitual | 1, 2  | #4, #6, #7, #12, #15, #18, #21, #33, #37 | pendiente |
-| R2  | Reportar en un toque y sin cuenta: banco de origen, banco de destino y qué pasó; máximo un reporte por dispositivo, par y 15 minutos         | 1, 2  | #4, #5, #15, #16, #18, #30               | pendiente |
+| R2  | Reportar en un toque y sin cuenta: banco de origen, banco de destino y qué pasó; máximo un reporte por dispositivo, par y 15 minutos         | 1, 2  | #4, #5, #15, #16, #18, #30               | parcial   |
 | R3  | Detalle por banco: reportes de las últimas 24 horas como origen y como destino, y los pares más afectados                                    | 2     | #18, #25, #29                            | pendiente |
 | R4  | Nunca decir "el banco está caído"; decir "N personas reportan problemas con … en los últimos 15 minutos"                                     | 1     | #6, #7, #15                              | pendiente |
 | R5  | Frenar el abuso: límite por dispositivo e IP, CAPTCHA invisible y respuesta 429                                                              | 2     | #27, #30                                 | pendiente |

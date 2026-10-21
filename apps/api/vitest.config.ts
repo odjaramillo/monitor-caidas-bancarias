@@ -12,14 +12,14 @@ export default defineConfig({
       // Test helpers are not shipped in the image (tsconfig.build.json), so they do not count.
       exclude: ['src/testing/**'],
       reporter: ['text-summary'],
-      // Floor = coverage measured on 2026-10-21 with the database connection (issue #20, decision D16).
+      // Floor = coverage measured on 2026-10-21 with POST /reports (issue #5, decision D16).
       // server.ts is the entry point and has no unit test; the docker job boots it instead.
       // Raise these numbers when coverage rises. Never lower them to make CI green.
       thresholds: {
-        statements: 64.58,
-        branches: 66.66,
-        functions: 88.88,
-        lines: 64.44
+        statements: 76.05,
+        branches: 80,
+        functions: 92.85,
+        lines: 76.11
       }
     }
   }
