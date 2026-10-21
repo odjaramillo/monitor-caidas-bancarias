@@ -16,11 +16,11 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 | --- | ------------------------------------------------------------------------------------------------------------------ | ---------- | ----- | --------------------------------------------- | --------- |
 | E1  | Repositorio GitHub con historial activo, README, `.gitignore` y `.env.example`                                     | p. 3, p. 5 | 1     | #2, #68                                       | parcial   |
 | E2  | URL pública funcional durante las revisiones; nada que dependa de localhost                                        | p. 3, p. 5 | 1     | #3, #8, #22, #68                              | pendiente |
-| E3  | Diagrama de arquitectura con frontend, backend/API, persistencia, caché y servicios externos, actualizado          | p. 3, p. 5 | 1, 2  | #10, #47, #58                                 | pendiente |
+| E3  | Diagrama de arquitectura con frontend, backend/API, persistencia, caché y servicios externos, actualizado          | p. 3, p. 5 | 1, 2  | #10, #47, #58                                 | parcial   |
 | E4  | Problema, usuarios objetivo y alcance del MVP                                                                      | p. 5       | 1     | #11, #24, #50, #52, #56                       | pendiente |
 | E5  | Aplicación básica funcional: flujo frontend → backend/API → persistencia                                           | p. 5       | 1     | #4, #5, #7, #12, #15, #16, #19, #20, #21, #54 | pendiente |
 | E6  | Docker en un componente clave, con explicación de imagen, contenedor, puertos, variables y ejecución               | p. 3, p. 5 | 1     | #8, #9, #19, #60                              | parcial   |
-| E7  | Modelos de servicio cloud identificados y justificados                                                             | p. 5       | 1     | #10, #58                                      | pendiente |
+| E7  | Modelos de servicio cloud identificados y justificados                                                             | p. 5       | 1     | #10, #58                                      | parcial   |
 | E8  | Base de datos administrada en la nube, adaptada al caso de uso y operativa en producción                           | p. 3, p. 5 | 1, 2  | #3, #4, #20, #39, #40, #59                    | pendiente |
 | E9  | Caché implementada o justificación técnica de no usarla                                                            | p. 5       | 2     | #37, #59                                      | pendiente |
 | E10 | CI/CD o automatización equivalente funcionando                                                                     | p. 3, p. 5 | 2     | #28, #41, #46, #60, #70, #71                  | parcial   |
@@ -36,8 +36,12 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 Evidencia de lo que ya está `parcial`:
 
 - **E1.** README, `.gitignore` y `.env.example` existen. Falta el aporte de todos (#2).
+- **E3.** [`arquitectura.md`](arquitectura.md) tiene el diagrama con frontend, API, persistencia, caché y servicios
+  externos, y cómo se comunica cada componente (#10). Falta mantenerlo actualizado en el Corte 2 (#47) y en el informe (#58).
 - **E6.** `apps/api/Dockerfile` existe; el CI construye la imagen, la arranca y exige que `/health` responda
   (#80). `compose.yaml` levanta PostgreSQL y Redis en local (#19, #54). [`contenedor.md`](contenedor.md) explica la imagen, el contenedor, el puerto, las variables y la ejecución (#9). Falta el despliegue (#8).
+- **E7.** [`arquitectura.md`](arquitectura.md) da el modelo de servicio de cada pieza (PaaS, DBaaS, SaaS) y por qué
+  (#10). Falta llevarlo al informe (#58).
 - **E10.** El CI corre lint, typecheck, pruebas, build de Docker y gitleaks en cada PR. Las pruebas cubren la API y el
   frontend, y `pnpm test` falla si un proyecto no tiene ninguna (#78) o si su cobertura baja del piso medido (#70).
   Falta el despliegue automático.
