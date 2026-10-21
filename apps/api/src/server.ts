@@ -1,6 +1,16 @@
-import { buildApp } from './app.js';
+import { ConfigError } from './config.js';
+import { createServer } from './start.js';
 
-const app = buildApp({ logger: { level: process.env.LOG_LEVEL ?? 'info' } });
+let server: ReturnType<typeof createServer>;
+try {
+  server = createServer(process.env, { logger: { level: process.env.LOG_LEVEL ?? 'info' } });
+} catch (err) {
+  if (!(err instanceof ConfigError)) throw err;
+  // No logger exists yet: print the reason and stop before listening.
+  console.error(`The API cannot start: ${err.message}`);
+  process.exit(1);
+}
+const { app } = server;
 
 const port = Number(process.env.PORT ?? 3000);
 // Inside a container, 0.0.0.0 is required so traffic from outside the container reaches the server.
