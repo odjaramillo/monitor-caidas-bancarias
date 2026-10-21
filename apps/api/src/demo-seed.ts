@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { effectiveHost, isLocalDatabaseUrl } from './database-url.js';
 import type { Db } from './db.js';
 
 // The worker (#6) counts the reports of this window to pick each pair's level.
@@ -18,36 +19,12 @@ const FAILURE_TYPES = ['no_sale', 'sale_no_llega', 'error_app', 'punto_de_venta'
 
 // Recent reports are 1 to 5 minutes old, so the levels hold for about 10 minutes after the seed.
 const RECENT_SPREAD_MINUTES = 5;
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 export interface DemoReport {
   origin: string;
   destination: string;
   type: string;
   minutesAgo: number;
-}
-
-// pg copies every query parameter into its config, and a `host` parameter wins over the host
-// before the path: `postgresql://localhost/mcb?host=db.example.com` connects to db.example.com.
-const HOST_OVERRIDES = ['host', 'hostaddr'];
-
-// effectiveHost returns the host pg connects to, or undefined when the URL cannot be read.
-export function effectiveHost(databaseUrl: string): string | undefined {
-  let url: URL;
-  try {
-    url = new URL(databaseUrl);
-  } catch {
-    return undefined;
-  }
-  return url.searchParams.get('host') || url.hostname || undefined;
-}
-
-// A URL is local only when its host is local and no query parameter can send pg somewhere else.
-export function isLocalDatabaseUrl(databaseUrl: string): boolean {
-  const host = effectiveHost(databaseUrl);
-  if (host === undefined || !LOCAL_HOSTS.has(host)) return false;
-  const { searchParams } = new URL(databaseUrl);
-  return HOST_OVERRIDES.every((name) => !searchParams.has(name));
 }
 
 // buildDemoReports dates each report relative to now: with fixed dates the demo goes back to "normal".

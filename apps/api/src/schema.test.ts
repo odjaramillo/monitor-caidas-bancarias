@@ -37,7 +37,7 @@ describe('database schema', () => {
   });
   afterAll(() => pool.end());
 
-  function insertReport(origin: string, destination: string, type: string | null) {
+  function insertReport(origin: string | null, destination: string | null, type: string | null) {
     return client.query<{ id: string; created_at: Date }>(
       'insert into reports (origin, destination, type) values ($1, $2, $3) returning id, created_at',
       [origin, destination, type]
@@ -86,6 +86,18 @@ describe('database schema', () => {
 
   it('rejects a report without a failure type', async () => {
     await expect(insertReport('banesco', 'mercantil', null)).rejects.toMatchObject({
+      code: NOT_NULL_VIOLATION
+    });
+  });
+
+  it('rejects a report without an origin bank', async () => {
+    await expect(insertReport(null, 'mercantil', 'no_sale')).rejects.toMatchObject({
+      code: NOT_NULL_VIOLATION
+    });
+  });
+
+  it('rejects a report without a destination bank', async () => {
+    await expect(insertReport('banesco', null, 'no_sale')).rejects.toMatchObject({
       code: NOT_NULL_VIOLATION
     });
   });
