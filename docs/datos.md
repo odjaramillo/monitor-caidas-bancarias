@@ -55,6 +55,10 @@ docker compose exec postgres psql -U mcb -d mcb -c '\d reports'
 `pnpm test` aplica las migraciones antes de las pruebas, y `src/schema.test.ts` comprueba los
 bancos, las llaves foráneas, el `check` de `type` y el índice.
 
+Las pruebas usan `DATABASE_URL` si está exportada y, si no, la base de `compose.yaml`. Como migran
+la base y escriben en ella, se niegan a correr si la URL no es local, con la misma regla que el
+comando de la demo (abajo). Si exportaste la URL de Supabase, quítala con `unset DATABASE_URL`.
+
 ## Datos de prueba para la demo
 
 Sin usuarios reales, todos los pares están en "normal". Este comando deja un par en cada nivel (#12):
