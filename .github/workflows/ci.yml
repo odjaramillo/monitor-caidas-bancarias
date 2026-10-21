@@ -16,6 +16,23 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    # The API tests run against a real PostgreSQL, like the one in compose.yaml (issue #20).
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: mcb
+          POSTGRES_PASSWORD: mcb
+          POSTGRES_DB: mcb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mcb -d mcb"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://mcb:mcb@localhost:5432/mcb
     steps:
       - uses: actions/checkout@v7
         with:
@@ -51,17 +68,29 @@ jobs:
           push: false
           load: true # the next step runs the image
           tags: mcb-api:ci
+      - name: The API image refuses to start without DATABASE_URL
+        run: |
+          if docker run --rm mcb-api:ci > out.txt 2>&1; then
+            echo "::error::The API image started without DATABASE_URL."
+            exit 1
+          fi
+          grep -q 'DATABASE_URL is not set' out.txt
+      - name: Start the local PostgreSQL from compose.yaml
+        run: docker compose up -d --wait postgres
       - name: The API image boots and answers /health
         run: |
-          docker run -d --name api -p 3000:3000 mcb-api:ci
+          # --network host lets the container reach the PostgreSQL that compose publishes on localhost.
+          docker run -d --name api --network host \
+            -e DATABASE_URL=postgresql://mcb:mcb@localhost:5432/mcb mcb-api:ci
           # The server needs a few seconds to start. Wait up to 30 s.
+          expected='{"status":"ok","database":"ok"}'
           for _ in $(seq 1 30); do
-            if [ "$(curl -fsS http://localhost:3000/health 2>/dev/null)" = '{"status":"ok"}' ]; then
+            if [ "$(curl -fsS http://localhost:3000/health 2>/dev/null)" = "$expected" ]; then
               exit 0
             fi
             sleep 1
           done
-          echo "::error::The API image did not answer /health with {\"status\":\"ok\"} in 30 s."
+          echo "::error::The API image did not answer /health with $expected in 30 s."
           docker logs api
           exit 1
 
