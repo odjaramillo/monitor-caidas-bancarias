@@ -37,7 +37,7 @@ Evidencia de lo que ya está `parcial`:
 
 - **E1.** README, `.gitignore` y `.env.example` existen. Falta el aporte de todos (#2).
 - **E6.** `apps/api/Dockerfile` existe; el CI construye la imagen, la arranca y exige que `/health` responda
-  (#80). `compose.yaml` levanta PostgreSQL y Redis en local (#19, #54). Faltan el despliegue (#8) y la explicación (#9).
+  (#80). `compose.yaml` levanta PostgreSQL y Redis en local (#19, #54). [`contenedor.md`](contenedor.md) explica la imagen, el contenedor, el puerto, las variables y la ejecución (#9). Falta el despliegue (#8).
 - **E10.** El CI corre lint, typecheck, pruebas, build de Docker y gitleaks en cada PR. Las pruebas cubren la API y el
   frontend, y `pnpm test` falla si un proyecto no tiene ninguna (#78) o si su cobertura baja del piso medido (#70).
   Falta el despliegue automático.
