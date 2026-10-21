@@ -1,3 +1,4 @@
+import type { InjectOptions } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import type { Db } from './db.js';
@@ -17,7 +18,7 @@ describe('CORS', () => {
     else process.env.CORS_ORIGIN = previous;
   });
 
-  async function inject(opts: Parameters<ReturnType<typeof buildApp>['inject']>[0]) {
+  async function inject(opts: InjectOptions) {
     const app = buildApp({ db }, { logger: false });
     const res = await app.inject(opts);
     await app.close();
