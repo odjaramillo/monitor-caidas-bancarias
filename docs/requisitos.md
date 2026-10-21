@@ -45,7 +45,8 @@ Evidencia de lo que ya está `parcial`:
 - **E10.** El CI corre lint, typecheck, pruebas, build de Docker y gitleaks en cada PR. Las pruebas cubren la API y el
   frontend, y `pnpm test` falla si un proyecto no tiene ninguna (#78) o si su cobertura baja del piso medido (#70).
   Falta el despliegue automático.
-- **E11.** Solo se versiona `.env.example`, y gitleaks revisa el historial en cada PR.
+- **E11.** Solo se versiona `.env.example`, y gitleaks revisa el historial en cada PR. La API lee `DATABASE_URL`
+  del entorno y no arranca sin ella (#20).
 - **E13.** El CI falla si una dependencia de producción tiene una vulnerabilidad alta o crítica (`pnpm audit`, #70).
   Faltan las medidas de la API: validación, límites y cabeceras.
 

@@ -86,6 +86,7 @@ issues de su label.
 pnpm install
 cp .env.example .env   # trae los valores locales; nunca subas .env
 docker compose up -d   # PostgreSQL en :5432 y Redis en :6379
+pnpm --filter api migrate up   # crea las tablas (apps/api/migrations)
 pnpm dev               # API en :3000, frontend en :5173
 ```
 
@@ -111,21 +112,21 @@ docker compose exec redis redis-cli
 
 ## Scripts
 
-| Comando          | Qué hace                                           |
-| ---------------- | -------------------------------------------------- |
-| `pnpm dev`       | Corre la API y el frontend y recarga al guardar    |
-| `pnpm lint`      | ESLint y la revisión de formato de Prettier        |
-| `pnpm format`    | Formatea todos los archivos con Prettier           |
-| `pnpm typecheck` | `tsc` para la API, `svelte-check` para el frontend |
-| `pnpm test`      | Vitest, con cobertura y su piso                    |
-| `pnpm build`     | Compila la API y genera el frontend estático       |
+| Comando          | Qué hace                                                                                 |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| `pnpm dev`       | Corre la API y el frontend y recarga al guardar                                          |
+| `pnpm lint`      | ESLint y la revisión de formato de Prettier                                              |
+| `pnpm format`    | Formatea todos los archivos con Prettier                                                 |
+| `pnpm typecheck` | `tsc` para la API, `svelte-check` para el frontend                                       |
+| `pnpm test`      | Vitest, con cobertura y su piso. La API necesita el PostgreSQL de `docker compose up -d` |
+| `pnpm build`     | Compila la API y genera el frontend estático                                             |
 
 Para construir y correr la imagen de la API desde la raíz del repositorio:
 
 ```sh
 docker build -f apps/api/Dockerfile -t mcb-api .
-docker run --rm -p 3000:3000 mcb-api
-curl localhost:3000/health   # {"status":"ok"}
+docker run --rm --network host -e DATABASE_URL=postgresql://mcb:mcb@localhost:5432/mcb mcb-api
+curl localhost:3000/health   # {"status":"ok","database":"ok"}
 ```
 
 ## Cómo trabajamos
@@ -164,8 +165,9 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 `.github/workflows/ci.yml` corre en cada PR y en cada push a `main`:
 
 1. `checks`: instala con el lockfile, revisa los mensajes de commit, lint, typecheck, pruebas y build.
-2. `docker`: valida `compose.yaml`, construye la imagen de la API, la arranca y exige que `/health`
-   responda `{"status":"ok"}` en 30 s.
+2. `docker`: valida `compose.yaml`, construye la imagen de la API, comprueba que no arranca sin
+   `DATABASE_URL`, la arranca con PostgreSQL y exige que `/health` responda
+   `{"status":"ok","database":"ok"}` en 30 s.
 3. `secrets`: gitleaks revisa todo el historial.
 
 `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
