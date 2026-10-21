@@ -7,16 +7,17 @@ Proyecto integrador de Computación en la Nube (INFO-02028), UCAB, 2026.
 
 ## Documentos
 
-| Documento                                                    | Qué tiene                                                        |
-| ------------------------------------------------------------ | ---------------------------------------------------------------- |
-| [Enunciado](docs/enunciado/enunciado-proyecto-nube-ucab.pdf) | El enunciado oficial del profesor                                |
-| [Propuesta](docs/propuesta.md)                               | La propuesta del equipo: problema, MVP, arquitectura y roles     |
-| [Arquitectura](docs/arquitectura.md)                         | Cada componente, cómo se comunica y su modelo de servicio        |
-| [Requisitos](docs/requisitos.md)                             | Cada requisito con su fuente, su corte, su issue y su estado     |
-| [Contrato de la API](docs/api.md)                            | Qué entra y qué sale de cada endpoint, con ejemplos JSON         |
-| [Contenedor](docs/contenedor.md)                             | La imagen de la API: etapas, puerto, variables y cómo ejecutarla |
-| [Calidad](docs/calidad.md)                                   | Qué control hace cumplir cada regla y la prueba de que falla     |
-| [Decisiones](docs/decisiones.md)                             | Qué se eligió, por qué y qué se descartó                         |
+| Documento                                                    | Qué tiene                                                         |
+| ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| [Enunciado](docs/enunciado/enunciado-proyecto-nube-ucab.pdf) | El enunciado oficial del profesor                                 |
+| [Propuesta](docs/propuesta.md)                               | La propuesta del equipo: problema, MVP, arquitectura y roles      |
+| [Arquitectura](docs/arquitectura.md)                         | Cada componente, cómo se comunica y su modelo de servicio         |
+| [Requisitos](docs/requisitos.md)                             | Cada requisito con su fuente, su corte, su issue y su estado      |
+| [Contrato de la API](docs/api.md)                            | Qué entra y qué sale de cada endpoint, con ejemplos JSON          |
+| [Contenedor](docs/contenedor.md)                             | La imagen de la API: etapas, puerto, variables y cómo ejecutarla  |
+| [Calidad](docs/calidad.md)                                   | Qué control hace cumplir cada regla y la prueba de que falla      |
+| [Datos](docs/datos.md)                                       | Qué guarda cada tabla de PostgreSQL y qué componente tiene estado |
+| [Decisiones](docs/decisiones.md)                             | Qué se eligió, por qué y qué se descartó                          |
 
 ## Arquitectura
 
@@ -87,6 +88,7 @@ issues de su label.
 pnpm install
 cp .env.example .env   # trae los valores locales; nunca subas .env
 docker compose up -d   # PostgreSQL en :5432 y Redis en :6379
+pnpm --filter api migrate up   # crea las tablas (apps/api/migrations)
 pnpm dev               # API en :3000, frontend en :5173
 ```
 
@@ -112,21 +114,21 @@ docker compose exec redis redis-cli
 
 ## Scripts
 
-| Comando          | Qué hace                                           |
-| ---------------- | -------------------------------------------------- |
-| `pnpm dev`       | Corre la API y el frontend y recarga al guardar    |
-| `pnpm lint`      | ESLint y la revisión de formato de Prettier        |
-| `pnpm format`    | Formatea todos los archivos con Prettier           |
-| `pnpm typecheck` | `tsc` para la API, `svelte-check` para el frontend |
-| `pnpm test`      | Vitest, con cobertura y su piso                    |
-| `pnpm build`     | Compila la API y genera el frontend estático       |
+| Comando          | Qué hace                                                                                 |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| `pnpm dev`       | Corre la API y el frontend y recarga al guardar                                          |
+| `pnpm lint`      | ESLint y la revisión de formato de Prettier                                              |
+| `pnpm format`    | Formatea todos los archivos con Prettier                                                 |
+| `pnpm typecheck` | `tsc` para la API, `svelte-check` para el frontend                                       |
+| `pnpm test`      | Vitest, con cobertura y su piso. La API necesita el PostgreSQL de `docker compose up -d` |
+| `pnpm build`     | Compila la API y genera el frontend estático                                             |
 
 Para construir y correr la imagen de la API desde la raíz del repositorio:
 
 ```sh
 docker build -f apps/api/Dockerfile -t mcb-api .
-docker run --rm -p 3000:3000 mcb-api
-curl localhost:3000/health   # {"status":"ok"}
+docker run --rm --network host -e DATABASE_URL=postgresql://mcb:mcb@localhost:5432/mcb mcb-api
+curl localhost:3000/health   # {"status":"ok","database":"ok"}
 ```
 
 ## Cómo trabajamos
@@ -165,8 +167,9 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 `.github/workflows/ci.yml` corre en cada PR y en cada push a `main`:
 
 1. `checks`: instala con el lockfile, revisa los mensajes de commit, lint, typecheck, pruebas y build.
-2. `docker`: valida `compose.yaml`, construye la imagen de la API, la arranca y exige que `/health`
-   responda `{"status":"ok"}` en 30 s.
+2. `docker`: valida `compose.yaml`, construye la imagen de la API, comprueba que no arranca sin
+   `DATABASE_URL`, la arranca con PostgreSQL y exige que `/health` responda
+   `{"status":"ok","database":"ok"}` en 30 s.
 3. `secrets`: gitleaks revisa todo el historial.
 
 `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
