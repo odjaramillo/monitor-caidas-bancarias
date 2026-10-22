@@ -10,3 +10,13 @@
 </svelte:head>
 
 {@render children()}
+
+<style>
+  /* Shared by every screen, so a visitor who opens /reportar directly gets them too. */
+  :global(body) {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    color: #1b1b1b;
+    background: #fff;
+  }
+</style>
