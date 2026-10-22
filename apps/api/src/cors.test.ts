@@ -19,7 +19,7 @@ describe('CORS', () => {
   });
 
   async function inject(opts: InjectOptions) {
-    const app = buildApp({ db }, { logger: false });
+    const app = buildApp({ db, getStatus: () => undefined }, { logger: false });
     const res = await app.inject(opts);
     await app.close();
     return res;
@@ -47,7 +47,7 @@ describe('CORS', () => {
     expect(res.headers['access-control-allow-origin']).toBe(frontend);
   });
 
-  it('never allows any other origin, so the browser blocks it', async () => {
+  it('answers a foreign origin with the frontend origin, so the browser blocks it', async () => {
     const res = await inject({
       method: 'GET',
       url: '/health',
@@ -56,5 +56,13 @@ describe('CORS', () => {
 
     // The header always names the frontend; it does not match, so the browser drops the response.
     expect(res.headers['access-control-allow-origin']).toBe(frontend);
+  });
+
+  it('stays off without CORS_ORIGIN', async () => {
+    delete process.env.CORS_ORIGIN;
+
+    const res = await inject({ method: 'GET', url: '/health', headers: { origin: frontend } });
+
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
   });
 });
