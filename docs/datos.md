@@ -80,8 +80,9 @@ pnpm --filter api seed:demo
   parámetro `host` o `hostaddr` (`pg` se conecta a ese host y no al de antes de la ruta), pide
   escribir el nombre del host para continuar; cualquier otra respuesta cancela sin escribir nada. Si
   la URL no se puede leer, se niega sin mostrarla, porque puede traer la contraseña.
-- Los números asumen los umbrales de #6. Si cambian, se ajusta `DEMO_PAIRS` en
-  `apps/api/src/demo-seed.ts`.
+- Los números asumen los umbrales fijos de #6, que rigen mientras el par tenga menos de 3 días de
+  historial a esa hora (una base nueva, como la de la demo; la línea base por hora es #33). Si
+  cambian, se ajusta `DEMO_PAIRS` en `apps/api/src/demo-seed.ts`.
 
 Fuera de este esquema, para el Corte 2: totales por hora y borrado de los reportes crudos a los 30
 días (#39).

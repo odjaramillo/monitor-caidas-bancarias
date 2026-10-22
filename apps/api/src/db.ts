@@ -5,7 +5,7 @@ import type { Config } from './config.js';
 export type Db = Pick<pg.Pool, 'query'>;
 
 // createPool opens connections lazily: nothing touches the database until the first query.
-export function createPool(config: Config): pg.Pool {
+export function createPool(config: Pick<Config, 'databaseUrl' | 'dbPoolMax'>): pg.Pool {
   return new pg.Pool({
     connectionString: config.databaseUrl,
     max: config.dbPoolMax,

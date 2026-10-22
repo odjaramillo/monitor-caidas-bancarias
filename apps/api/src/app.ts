@@ -1,10 +1,13 @@
 import cors from '@fastify/cors';
 import Fastify, { type FastifyServerOptions } from 'fastify';
 import type { Db } from './db.js';
+import type { Status } from './levels.js';
 import { reportRoutes } from './reports.js';
 
 export interface AppDeps {
   db: Db;
+  // The last status the worker computed, or undefined before the first pass finishes.
+  getStatus: () => Status | undefined;
 }
 
 // buildApp creates the server without listening, so tests can call app.inject().
@@ -31,6 +34,19 @@ export function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}) {
   });
 
   reportRoutes(app, deps.db);
+
+  // Answers from memory and never queries the database (docs/api.md): the worker keeps it fresh.
+  app.get('/status', async (_req, reply) => {
+    const status = deps.getStatus();
+    if (!status) {
+      return reply.code(503).send({
+        statusCode: 503,
+        error: 'Service Unavailable',
+        message: 'Status has not been computed yet'
+      });
+    }
+    return status;
+  });
 
   return app;
 }

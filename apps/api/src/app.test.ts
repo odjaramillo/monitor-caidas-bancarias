@@ -1,12 +1,13 @@
 import { afterAll, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import { createPool, type Db } from './db.js';
+import type { Status } from './levels.js';
 import { TEST_DATABASE_URL } from './testing/database.js';
 
 describe('GET /health', () => {
   it('answers 200 when the database responds', async () => {
     const pool = createPool({ databaseUrl: TEST_DATABASE_URL, dbPoolMax: 1 });
-    const app = buildApp({ db: pool }, { logger: false });
+    const app = buildApp({ db: pool, getStatus: () => undefined }, { logger: false });
     afterAll(async () => {
       await app.close();
       await pool.end();
@@ -22,12 +23,70 @@ describe('GET /health', () => {
     const brokenDb: Db = {
       query: () => Promise.reject(new Error('connection refused'))
     } as unknown as Db;
-    const app = buildApp({ db: brokenDb }, { logger: false });
+    const app = buildApp({ db: brokenDb, getStatus: () => undefined }, { logger: false });
     afterAll(() => app.close());
 
     const res = await app.inject({ method: 'GET', url: '/health' });
 
     expect(res.statusCode).toBe(503);
     expect(res.json()).toEqual({ status: 'error', database: 'unreachable' });
+  });
+});
+
+describe('GET /status', () => {
+  // The route must answer from memory: a database that fails on any query proves it.
+  const untouchableDb: Db = {
+    query: () => Promise.reject(new Error('GET /status must not query the database'))
+  } as unknown as Db;
+
+  const status: Status = {
+    updatedAt: '2026-10-28T14:05:30.000Z',
+    windowMinutes: 15,
+    pairs: [
+      {
+        origin: 'banesco',
+        destination: 'mercantil',
+        level: 'muchos_reportes',
+        reports: 12,
+        message:
+          '12 personas reportan problemas con pagos de Banesco a Mercantil en los últimos 15 minutos'
+      }
+    ]
+  };
+
+  it('answers 200 with the last computed status', async () => {
+    const app = buildApp({ db: untouchableDb, getStatus: () => status }, { logger: false });
+    afterAll(() => app.close());
+
+    const res = await app.inject({ method: 'GET', url: '/status' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual(status);
+  });
+
+  it('answers 503 before the first pass finishes', async () => {
+    const app = buildApp({ db: untouchableDb, getStatus: () => undefined }, { logger: false });
+    afterAll(() => app.close());
+
+    const res = await app.inject({ method: 'GET', url: '/status' });
+
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toEqual({
+      statusCode: 503,
+      error: 'Service Unavailable',
+      message: 'Status has not been computed yet'
+    });
+  });
+
+  it('serves the newest status on every call', async () => {
+    const latest: { current?: Status } = {};
+    const app = buildApp({ db: untouchableDb, getStatus: () => latest.current }, { logger: false });
+    afterAll(() => app.close());
+
+    const before = await app.inject({ method: 'GET', url: '/status' });
+    latest.current = status;
+    const after = await app.inject({ method: 'GET', url: '/status' });
+
+    expect([before.statusCode, after.statusCode]).toEqual([503, 200]);
   });
 });
