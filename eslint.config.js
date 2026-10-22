@@ -19,6 +19,25 @@ export default ts.config(
     }
   },
   {
+    // levels.ts holds the level rules. Its tests need no database and no server (issue #115).
+    files: ['apps/api/src/levels.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex:
+                '^(pg|fastify|@fastify/.*|node-pg-migrate)(/.*)?$|^\\.\\.?/(.*/)?(app|config|db|demo-seed|reports|seed-demo|server|start|status-worker|testing/.*)(\\.[jt]s)?$',
+              message:
+                'levels.ts holds pure domain logic, so it must not import a database, HTTP server or I/O module.'
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
     files: ['**/*.svelte', '**/*.svelte.ts'],
     languageOptions: { parserOptions: { parser: ts.parser } }
   }
