@@ -10,6 +10,8 @@ worker (#6, #21) programan contra este documento, así nadie espera a que otro t
   muestra en la hora de Venezuela.
 - Los identificadores (bancos, tipos de falla, niveles) son texto fijo en minúsculas. Los textos
   para personas van en español.
+- El frontend copia las listas cerradas en `apps/web/src/lib/`. Un PR que cambie una lista aquí
+  cambia también esa copia.
 
 | Método | Ruta       | Para qué                                       | Issue   |
 | ------ | ---------- | ---------------------------------------------- | ------- |
@@ -83,13 +85,32 @@ Todas las respuestas de error tienen la misma forma, que es la de Fastify:
 - `message` explica qué falló. Sirve para el log y para depurar; el frontend no lo muestra tal cual.
 - Fastify puede agregar `code` (por ejemplo `FST_ERR_VALIDATION`). El frontend no depende de él.
 
-| Código | Cuándo                                                               |
-| ------ | -------------------------------------------------------------------- |
-| `400`  | El cuerpo no cumple el esquema o nombra un banco que no existe       |
-| `404`  | La ruta no existe                                                    |
-| `429`  | Límite de reportes por dispositivo e IP (Corte 2, #30)               |
-| `500`  | Error inesperado de la API                                           |
-| `503`  | La base de datos no responde, o el estado todavía no se ha calculado |
+| Código | Cuándo                                                                                                                                                          |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400`  | El cuerpo no cumple el esquema o nombra un banco que no existe                                                                                                  |
+| `404`  | La ruta no existe                                                                                                                                               |
+| `429`  | Límite de reportes por dispositivo e IP (Corte 2, #30). Incluye la cabecera `Retry-After` con los segundos que faltan, para que el frontend diga cuánto esperar |
+| `500`  | Error inesperado de la API                                                                                                                                      |
+| `503`  | La base de datos no responde, o el estado todavía no se ha calculado                                                                                            |
+
+## CORS
+
+El frontend vive en otro dominio (Vercel), así que el navegador pide permiso antes de llamar a la
+API.
+
+- La API solo acepta el origen que dice la variable `CORS_ORIGIN`, por ejemplo la URL de Vercel. Sin
+  esa variable, CORS queda apagado y el navegador bloquea las llamadas desde otro dominio.
+- Antes de cada `POST /reports` con `Content-Type: application/json`, el navegador manda una
+  petición `OPTIONS` (preflight). La API la responde con `204` y las cabeceras
+  `Access-Control-Allow-Origin` y `Access-Control-Allow-Methods`. Lo hace `@fastify/cors`, registrado
+  en `apps/api/src/app.ts`.
+- Todas las respuestas llevan `Access-Control-Allow-Origin` con el valor de `CORS_ORIGIN`. Si la
+  llamada viene de otro dominio, ese valor no coincide y el navegador descarta la respuesta.
+- El navegador no deja leer `Retry-After` por defecto, así que la API también debe exponerla con la
+  opción `exposedHeaders` de `@fastify/cors`; ese cambio llega con #30, junto con el `429`.
+- CORS lo aplica el navegador: no frena a un script o a `curl`. Contra el abuso están los límites
+  del Corte 2 (#30).
+- Las pruebas de estas reglas están en `apps/api/src/cors.test.ts`.
 
 ## `POST /reports`
 
@@ -199,16 +220,16 @@ base de datos.
 }
 ```
 
-| Campo                 | Qué es                                                                |
-| --------------------- | --------------------------------------------------------------------- |
-| `updatedAt`           | Hora del último cálculo. El frontend avisa si es vieja (#26, Corte 2) |
-| `windowMinutes`       | Tamaño de la ventana que se contó, en minutos                         |
-| `pairs`               | Los 100 pares, ordenados de más a menos reportes                      |
-| `pairs[].origin`      | `id` del banco de origen                                              |
-| `pairs[].destination` | `id` del banco de destino                                             |
-| `pairs[].level`       | Un `level` de la lista de niveles                                     |
-| `pairs[].reports`     | Reportes del par en la ventana                                        |
-| `pairs[].message`     | El texto que muestra la pantalla, tal cual                            |
+| Campo                 | Qué es                                                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `updatedAt`           | Hora del último cálculo. El frontend avisa si es vieja (#26, Corte 2)                                                                                                                       |
+| `windowMinutes`       | Tamaño de la ventana que se contó, en minutos                                                                                                                                               |
+| `pairs`               | Los 100 pares, de más a menos reportes. Si dos tienen los mismos, por `origin` y luego por `destination`, en orden alfabético del `id`, para que la lista no cambie de orden entre recargas |
+| `pairs[].origin`      | `id` del banco de origen                                                                                                                                                                    |
+| `pairs[].destination` | `id` del banco de destino                                                                                                                                                                   |
+| `pairs[].level`       | Un `level` de la lista de niveles                                                                                                                                                           |
+| `pairs[].reports`     | Reportes del par en la ventana                                                                                                                                                              |
+| `pairs[].message`     | El texto que muestra la pantalla, tal cual                                                                                                                                                  |
 
 ### El texto de `message` (R4)
 
