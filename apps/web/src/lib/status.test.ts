@@ -1,10 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bankName } from './banks.js';
 import {
   apiBaseUrl,
   buildStatusView,
+  createStatusScreen,
   loadStatus,
-  MESSAGES,
+  type StatusPageData,
   type StatusPair,
   type StatusResponse
 } from './status.js';
@@ -55,6 +56,10 @@ function fakeFetch(response: Response | Error) {
     return response;
   }) as unknown as typeof fetch;
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('bankName', () => {
   it('uses the name from the contract list', () => {
@@ -127,6 +132,18 @@ describe('buildStatusView', () => {
     expect(view.normalSummary).toBe('Los 2 pares están en nivel normal');
   });
 
+  it('uses the singular when the only pair is normal', () => {
+    const view = buildStatusView({ ...example, pairs: [pair('bnc', 'plaza', 'normal', 0)] });
+
+    expect(view.normalSummary).toBe('El único par está en nivel normal');
+  });
+
+  it('gives no cards and no summary when the API sends no pairs', () => {
+    const view = buildStatusView({ ...example, pairs: [] });
+
+    expect(view).toMatchObject({ alerts: [], normalCount: 0, normalSummary: '', all: [] });
+  });
+
   it('shows the update time in Venezuela, not in UTC', () => {
     expect(buildStatusView(example).updatedAt).toBe('10:05');
   });
@@ -145,25 +162,93 @@ describe('loadStatus', () => {
 
     const data = await loadStatus(fetch, 'https://api.example.com');
 
-    expect(fetch).toHaveBeenCalledWith('https://api.example.com/status');
+    expect(fetch).toHaveBeenCalledWith('https://api.example.com/status', {
+      signal: expect.any(AbortSignal)
+    });
     expect(data).toEqual({ state: 'ok', view: buildStatusView(example) });
+  });
+
+  it('stops waiting after 8 seconds', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+
+    await loadStatus(fakeFetch(Response.json(example)), '');
+
+    expect(timeout).toHaveBeenCalledWith(8000);
+  });
+
+  it('shows an error when the wait ends before the API answers', async () => {
+    const controller = new AbortController();
+    // Like the browser fetch: it rejects only when the signal aborts.
+    const fetch = vi.fn(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+        })
+    ) as unknown as typeof globalThis.fetch;
+
+    const pending = loadStatus(fetch, '', controller.signal);
+    controller.abort(new DOMException('The operation timed out.', 'TimeoutError'));
+
+    expect(await pending).toEqual({ state: 'error' });
   });
 
   it('asks to wait when the status is not computed yet (503)', async () => {
     const data = await loadStatus(fakeFetch(new Response(null, { status: 503 })), '');
 
-    expect(data).toEqual({ state: 'unavailable', message: MESSAGES.computing });
+    expect(data).toEqual({ state: 'computing' });
   });
 
   it('shows an error for any other failed answer', async () => {
     const data = await loadStatus(fakeFetch(new Response(null, { status: 500 })), '');
 
-    expect(data).toEqual({ state: 'unavailable', message: MESSAGES.error });
+    expect(data).toEqual({ state: 'error' });
   });
 
   it('shows an error when the network fails', async () => {
     const data = await loadStatus(fakeFetch(new TypeError('Failed to fetch')), '');
 
-    expect(data).toEqual({ state: 'unavailable', message: MESSAGES.error });
+    expect(data).toEqual({ state: 'error' });
+  });
+});
+
+describe('createStatusScreen', () => {
+  // Keeps one subscriber, like the page, and returns the last state it saw.
+  function watch(screen: ReturnType<typeof createStatusScreen>) {
+    let current: StatusPageData | undefined;
+    screen.subscribe((state) => (current = state));
+    return () => current;
+  }
+
+  it('starts in the loading state and asks the API when the page subscribes', async () => {
+    const fetch = fakeFetch(Response.json(example));
+    const screen = createStatusScreen('https://api.example.com', fetch);
+
+    expect(fetch).not.toHaveBeenCalled();
+    const shown = watch(screen);
+
+    expect(shown()).toEqual({ state: 'loading' });
+    expect(fetch).toHaveBeenCalledWith('https://api.example.com/status', {
+      signal: expect.any(AbortSignal)
+    });
+    await vi.waitFor(() =>
+      expect(shown()).toEqual({ state: 'ok', view: buildStatusView(example) })
+    );
+  });
+
+  it('asks again on retry after a failure and shows the status', async () => {
+    const fetch = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(Response.json(example)) as unknown as typeof globalThis.fetch;
+    const screen = createStatusScreen('https://api.example.com', fetch);
+    const shown = watch(screen);
+    await vi.waitFor(() => expect(shown()).toEqual({ state: 'error' }));
+
+    const retry = screen.refresh();
+
+    expect(shown()).toEqual({ state: 'loading' });
+    await retry;
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(shown()).toEqual({ state: 'ok', view: buildStatusView(example) });
   });
 });

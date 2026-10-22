@@ -1,7 +1,12 @@
 <script lang="ts">
+  import { MESSAGES } from '#lib/status.js';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
+
+  // The shell is on screen before the API answers.
+  // The subscription to the screen ($screen) asks for the status.
+  let screen = $derived(data.screen);
 </script>
 
 <svelte:head>
@@ -11,36 +16,49 @@
 <main>
   <h1>Monitor de caídas bancarias</h1>
 
-  {#if data.state === 'ok'}
-    {#each data.view.alerts as pair (pair.key)}
-      <article class="card {pair.level}">
-        <h2>{pair.levelLabel}</h2>
-        <p>{pair.message}</p>
-      </article>
-    {/each}
+  {#if $screen.state === 'ok'}
+    {@const view = $screen.view}
+    {#if view.all.length === 0}
+      <p class="notice">{MESSAGES.empty}</p>
+    {:else}
+      {#each view.alerts as pair (pair.key)}
+        <article class="card {pair.level}">
+          <h2>{pair.levelLabel}</h2>
+          <p>{pair.message}</p>
+        </article>
+      {/each}
 
-    {#if data.view.normalCount > 0}
-      <article class="card normal">
-        <h2>Normal</h2>
-        <p>{data.view.normalSummary}</p>
-      </article>
+      {#if view.normalCount > 0}
+        <article class="card normal">
+          <h2>Normal</h2>
+          <p>{view.normalSummary}</p>
+        </article>
+      {/if}
+
+      <details>
+        <summary>Ver todos los pares</summary>
+        <ul>
+          {#each view.all as pair (pair.key)}
+            <li class={pair.level}>
+              <strong>{pair.route}</strong>
+              <span class="level">{pair.levelLabel}</span>
+              <span>{pair.message}</span>
+            </li>
+          {/each}
+        </ul>
+      </details>
     {/if}
 
-    <details>
-      <summary>Ver todos los pares</summary>
-      <ul>
-        {#each data.view.all as pair (pair.key)}
-          <li class={pair.level}>
-            <strong>{pair.route}</strong>
-            <span>{pair.message}</span>
-          </li>
-        {/each}
-      </ul>
-    </details>
-
-    <p class="updated">Actualizado a las {data.view.updatedAt}</p>
+    <p class="updated">Actualizado a las {view.updatedAt}</p>
+  {:else if $screen.state === 'loading'}
+    <p class="notice" role="status">{MESSAGES.loading}</p>
   {:else}
-    <p class="notice" role="status">{data.message}</p>
+    {#if $screen.state === 'error'}
+      <p class="notice" role="alert">{MESSAGES.error}</p>
+    {:else}
+      <p class="notice" role="status">{MESSAGES.computing}</p>
+    {/if}
+    <button class="retry" type="button" onclick={() => screen.refresh()}>Reintentar</button>
   {/if}
 </main>
 
@@ -87,7 +105,8 @@
     border-color: #c22f2a;
   }
 
-  .muchos_reportes h2 {
+  .muchos_reportes h2,
+  .muchos_reportes .level {
     color: #a3221d;
   }
 
@@ -96,7 +115,8 @@
     border-color: #c9a227;
   }
 
-  .posibles_problemas h2 {
+  .posibles_problemas h2,
+  .posibles_problemas .level {
     color: #7a5f06;
   }
 
@@ -105,7 +125,8 @@
     border-color: #4c9a52;
   }
 
-  .normal h2 {
+  .normal h2,
+  .normal .level {
     color: #107628;
   }
 
@@ -123,19 +144,43 @@
     list-style: none;
   }
 
+  /* The level is text in each row, so the colour is not the only signal. */
   li {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
     margin-bottom: 0.5rem;
     padding: 0.75rem;
-    border-left: 4px solid;
+    border-radius: 0.5rem;
+  }
+
+  .level {
+    font-weight: bold;
   }
 
   .updated,
   .notice {
     color: #5f5f5f;
     text-align: center;
+  }
+
+  .retry {
+    display: block;
+    min-height: 2.75rem;
+    margin: 0 auto;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #0b4cc4;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #0b4cc4;
+    font: inherit;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .retry:focus-visible {
+    outline: 3px solid #0b4cc4;
+    outline-offset: 2px;
   }
 
   .report {
