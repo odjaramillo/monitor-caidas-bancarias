@@ -59,6 +59,26 @@ describe('createServer status worker', () => {
     expect(res.json().pairs).toHaveLength(100);
   });
 
+  it('logs a failed pass with the app logger and keeps the server up', async () => {
+    // Nothing listens on port 1, so every query of the pass is refused.
+    const { app, worker } = createServer(
+      { DATABASE_URL: 'postgres://user:pass@127.0.0.1:1/monitor' },
+      { logger: false }
+    );
+    const logError = vi.spyOn(app.log, 'error');
+
+    await app.ready();
+    await worker.runOnce();
+    const res = await app.inject({ method: 'GET', url: '/status' });
+    await app.close();
+
+    expect(logError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.anything() }),
+      'status pass failed'
+    );
+    expect(res.statusCode).toBe(503);
+  });
+
   it('starts the worker when the server is ready and stops it when the server closes', async () => {
     const { app, worker } = createServer({ DATABASE_URL: TEST_DATABASE_URL }, { logger: false });
     const start = vi.spyOn(worker, 'start');
