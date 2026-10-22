@@ -27,7 +27,7 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 | E11 | Secretos fuera del código; ninguna credencial en el repositorio                                                    | p. 3, p. 8 | 1     | #3, #20, #71                                  | parcial   |
 | E12 | Logs, monitoreo de errores y estado del servicio visibles                                                          | p. 3, p. 5 | 2     | #42, #43, #44, #60                            | pendiente |
 | E13 | Medidas mínimas de seguridad                                                                                       | p. 5       | 2     | #27, #30, #32, #46, #57, #70                  | parcial   |
-| E14 | Análisis de cuellos de botella y propuesta ante demanda masiva                                                     | p. 3, p. 5 | 2     | #31, #34, #36, #39, #45, #58                  | pendiente |
+| E14 | Análisis de cuellos de botella y propuesta ante demanda masiva                                                     | p. 3, p. 5 | 2     | #36, #39, #45, #58                            | pendiente |
 | E15 | Infraestructura como código (opcional, bonificación)                                                               | p. 3       | Final | #60, #63, #64                                 | pendiente |
 | E16 | Informe técnico final en PDF con las 16 secciones mínimas                                                          | p. 6       | Final | #55, #56, #57, #58, #59, #60, #61, #62, #68   | pendiente |
 | E17 | Demostración en vivo sobre la versión desplegada y defensa de 20 minutos                                           | p. 7       | Final | #13, #48, #65, #66, #67, #68                  | pendiente |
@@ -39,8 +39,7 @@ Evidencia de lo que ya está `parcial` o `hecho`:
   Falta revisarlo con el checklist de la entrega final (#68).
 - **E2.** El frontend está en https://monitor-caidas-bancarias.vercel.app y la API en
   https://monitor-caidas-bancarias.onrender.com (README, #8, #22). El 22-10-2026 un reporte enviado desde un teléfono
-  apareció en la pantalla de estado. Falta que dos integrantes puedan entrar a cada plataforma (#3) y el checklist de
-  la entrega final (#68).
+  apareció en la pantalla de estado. Falta el checklist de la entrega final (#68).
 - **E3.** [`arquitectura.md`](arquitectura.md) tiene el diagrama con frontend, API, persistencia, caché y servicios
   externos, y cómo se comunica cada componente (#10). Falta mantenerlo actualizado en el Corte 2 (#47) y en el informe (#58).
 - **E4.** [`propuesta.md`](propuesta.md) presenta el problema, los usuarios objetivo y el alcance del MVP (#11), y el
@@ -88,7 +87,7 @@ Estas reglas aplican siempre y no tienen issue propio:
 | R3  | Detalle por banco: reportes de las últimas 24 horas como origen y como destino, y los pares más afectados                                    | 2     | #18, #25, #29                            | parcial   |
 | R4  | Nunca decir "el banco está caído"; decir "N personas reportan problemas con … en los últimos 15 minutos"                                     | 1     | #6, #7, #15                              | hecho     |
 | R5  | Frenar el abuso: límite por dispositivo e IP, CAPTCHA invisible y respuesta 429                                                              | 2     | #27, #30                                 | pendiente |
-| R6  | Seguir funcionando si cae PostgreSQL, Redis, el worker o el CAPTCHA (plan de la sección 7 de la [propuesta](propuesta.md))                   | 2     | #26, #31, #34, #38, #54                  | parcial   |
+| R6  | Seguir funcionando si cae PostgreSQL, Redis, el worker o el CAPTCHA (plan de la sección 7 de la [propuesta](propuesta.md))                   | 2     | #26, #38, #54                            | parcial   |
 | R7  | Responder "¿dónde se rompe este pago?" en menos de 5 segundos, en un teléfono con mala señal                                                 | 1     | #7, #16, #18                             | parcial   |
 | R8  | Quincena simulada con k6: de 5 a 500 lecturas y 50 reportes por segundo en 10 minutos, con un banco caído                                    | 2     | #45, #66                                 | pendiente |
 

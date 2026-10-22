@@ -79,9 +79,9 @@ ni tienen secretos, pero sobran.
 | `STATUS_INTERVAL_MS` | `30000`                      | Cada cuántos milisegundos el worker recalcula el estado, de 1000 a 3600000 (#21).                |
 
 Si falta `DATABASE_URL`, o si `DB_POOL_MAX` no es un número de 1 a 15 (o `STATUS_INTERVAL_MS` no es un número válido), la API escribe el motivo y
-termina con código 1 antes de escuchar (#20). La URL de Redis llega con #31; quien la agregue la
-documenta en esta tabla y en `.env.example`. Los valores reales nunca van en la imagen ni en el
-repositorio: en producción viven en las variables del servicio de Render.
+termina con código 1 antes de escuchar (#20). La URL de Redis llega con los límites (#30) o la
+caché (#37); quien la agregue primero la documenta en esta tabla y en `.env.example`. Los valores
+reales nunca van en la imagen ni en el repositorio: en producción viven en las variables del servicio de Render.
 
 ## Construir y ejecutar la imagen en local
 
