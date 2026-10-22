@@ -41,7 +41,7 @@ Navegador ──> Frontend (SvelteKit estático, CDN de Vercel)
                  │                │
                  ▼                ▼
           Upstash Redis     Supabase PostgreSQL
-     (stream, caché, límites)  (fuente de verdad)
+        (caché, límites)    (fuente de verdad)
 ```
 
 | Pieza         | Plataforma          | Modelo de servicio |

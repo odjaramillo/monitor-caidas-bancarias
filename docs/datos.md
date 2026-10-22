@@ -36,12 +36,12 @@ Un reporte por cada persona que avisa que un pago falló. Es lo único que crece
 
 ## Qué tiene estado
 
-| Componente | ¿Tiene estado? | Qué pasa si se reinicia o se pierde                                           |
-| ---------- | -------------- | ----------------------------------------------------------------------------- |
-| PostgreSQL | Sí             | Es la fuente de verdad. Supabase lo respalda; el plan de recuperación es #40  |
-| Redis      | Temporal       | Stream, caché y límites (Corte 2). Todo se puede reconstruir desde PostgreSQL |
-| API/worker | No             | Se reinicia sin perder nada: lo que necesita lo lee de PostgreSQL o de Redis  |
-| Frontend   | No             | Son archivos estáticos                                                        |
+| Componente | ¿Tiene estado? | Qué pasa si se reinicia o se pierde                                          |
+| ---------- | -------------- | ---------------------------------------------------------------------------- |
+| PostgreSQL | Sí             | Es la fuente de verdad. Supabase lo respalda; el plan de recuperación es #40 |
+| Redis      | Temporal       | Caché y límites (Corte 2). Todo se puede reconstruir desde PostgreSQL        |
+| API/worker | No             | Se reinicia sin perder nada: lo que necesita lo lee de PostgreSQL o de Redis |
+| Frontend   | No             | Son archivos estáticos                                                       |
 
 ## Cómo aplicar el esquema
 
