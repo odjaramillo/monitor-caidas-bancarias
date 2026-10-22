@@ -58,7 +58,9 @@ transferencia de Banesco a Banesco también puede fallar.
 | `muchos_reportes`    | Muchos reportes         |
 
 El umbral que separa un nivel de otro lo decide el worker (#6) y no forma parte del contrato: puede
-cambiar sin tocar el frontend.
+cambiar sin tocar el frontend. En el Corte 1 son fijos sobre el conteo de 15 minutos: 0 reportes es
+`normal`, de 1 a 4 es `posibles_problemas` y 5 o más es `muchos_reportes` (decisión D19 en
+[`decisiones.md`](decisiones.md)).
 
 ## Errores
 
