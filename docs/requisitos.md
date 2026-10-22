@@ -15,7 +15,7 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 | ID  | Requisito                                                                                                          | Fuente     | Corte | Issues                                        | Estado    |
 | --- | ------------------------------------------------------------------------------------------------------------------ | ---------- | ----- | --------------------------------------------- | --------- |
 | E1  | Repositorio GitHub con historial activo, README, `.gitignore` y `.env.example`                                     | p. 3, p. 5 | 1     | #2, #68                                       | parcial   |
-| E2  | URL pública funcional durante las revisiones; nada que dependa de localhost                                        | p. 3, p. 5 | 1     | #3, #8, #22, #68                              | pendiente |
+| E2  | URL pública funcional durante las revisiones; nada que dependa de localhost                                        | p. 3, p. 5 | 1     | #3, #8, #22, #68                              | parcial   |
 | E3  | Diagrama de arquitectura con frontend, backend/API, persistencia, caché y servicios externos, actualizado          | p. 3, p. 5 | 1, 2  | #10, #47, #58                                 | parcial   |
 | E4  | Problema, usuarios objetivo y alcance del MVP                                                                      | p. 5       | 1     | #11, #50, #52, #56                            | parcial   |
 | E5  | Aplicación básica funcional: flujo frontend → backend/API → persistencia                                           | p. 5       | 1     | #4, #5, #7, #12, #15, #16, #19, #20, #21, #54 | hecho     |
@@ -37,6 +37,10 @@ Evidencia de lo que ya está `parcial` o `hecho`:
 
 - **E1.** README, `.gitignore` y `.env.example` existen, y los cinco integrantes tienen commits fusionados (#2).
   Falta revisarlo con el checklist de la entrega final (#68).
+- **E2.** El frontend está en https://monitor-caidas-bancarias.vercel.app y la API en
+  https://monitor-caidas-bancarias.onrender.com (README, #8, #22). El 22-10-2026 un reporte enviado desde un teléfono
+  apareció en la pantalla de estado. Falta que dos integrantes puedan entrar a cada plataforma (#3) y el checklist de
+  la entrega final (#68).
 - **E3.** [`arquitectura.md`](arquitectura.md) tiene el diagrama con frontend, API, persistencia, caché y servicios
   externos, y cómo se comunica cada componente (#10). Falta mantenerlo actualizado en el Corte 2 (#47) y en el informe (#58).
 - **E4.** [`propuesta.md`](propuesta.md) presenta el problema, los usuarios objetivo y el alcance del MVP (#11), y el
@@ -47,14 +51,17 @@ Evidencia de lo que ya está `parcial` o `hecho`:
   30 segundos (#21) y la pantalla de estado lo muestra con `GET /status` (#7). El PR del formulario (#103) lo
   probó de punta a punta contra PostgreSQL local. La URL pública es E2.
 - **E6.** `apps/api/Dockerfile` existe; el CI construye la imagen, la arranca y exige que `/health` responda
-  (#80). `compose.yaml` levanta PostgreSQL y Redis en local (#19, #54). [`contenedor.md`](contenedor.md) explica la imagen, el contenedor, el puerto, las variables y la ejecución (#9). Falta el despliegue (#8).
+  (#80). `compose.yaml` levanta PostgreSQL y Redis en local (#19, #54). [`contenedor.md`](contenedor.md) explica la imagen, el contenedor, el puerto, las variables y la ejecución (#9). Render corre esa imagen en producción (#8). Falta llevarlo al informe (#60).
 - **E7.** [`arquitectura.md`](arquitectura.md) da el modelo de servicio de cada pieza (PaaS, DBaaS, SaaS) y por qué
   (#10). Falta llevarlo al informe (#58).
 - **E8.** El esquema está adaptado al caso de uso: llaves foráneas a los bancos, tipos de falla cerrados e
-  índice para la ventana de 15 minutos ([`datos.md`](datos.md), #4). Falta aplicarlo en Supabase y operarlo en producción.
+  índice para la ventana de 15 minutos ([`datos.md`](datos.md), #4). La migración corre en Supabase y la API la usa en
+  producción desde el 22-10-2026 (#8). Faltan los totales por hora con la purga a los 30 días (#39), el respaldo (#40)
+  y llevarlo al informe (#59).
 - **E10.** El CI corre lint, typecheck, pruebas, build de Docker y gitleaks en cada PR. Las pruebas cubren la API y el
   frontend, y `pnpm test` falla si un proyecto no tiene ninguna (#78) o si su cobertura baja del piso medido (#70).
-  Falta el despliegue automático.
+  Render despliega `main` cuando pasa el CI, y Vercel despliega `main` y una vista previa por PR (#8, #22). Falta que el
+  pipeline pruebe `/health` después de cada despliegue y que el README lo describa (#41).
 - **E11.** Solo se versiona `.env.example`, y gitleaks revisa el historial en cada PR. La API lee `DATABASE_URL`
   del entorno y no arranca sin ella (#20).
 - **E13.** El CI falla si una dependencia de producción tiene una vulnerabilidad alta o crítica (`pnpm audit`, #70).
