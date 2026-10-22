@@ -1,6 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import pg from 'pg';
+import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
-import { createPool, type Db } from './db.js';
+import type { Db } from './db.js';
 import { TEST_DATABASE_URL } from './testing/database.js';
 
 const valid = { origin: 'banesco', destination: 'mercantil', type: 'sale_no_llega' };
@@ -15,7 +16,7 @@ function pgError(code: string, message = 'database error') {
 }
 
 async function post(db: Db, payload: unknown) {
-  const app = buildApp({ db }, { logger: false });
+  const app = buildApp({ db, getStatus: () => undefined }, { logger: false });
   const res = await app.inject({ method: 'POST', url: '/reports', payload: payload as object });
   await app.close();
   return res;
@@ -42,7 +43,7 @@ describe('POST /reports validation', () => {
   });
 
   it('rejects a body that is not JSON with 400', async () => {
-    const app = buildApp({ db: untouched }, { logger: false });
+    const app = buildApp({ db: untouched, getStatus: () => undefined }, { logger: false });
     const res = await app.inject({
       method: 'POST',
       url: '/reports',
@@ -96,16 +97,26 @@ describe('POST /reports database errors', () => {
 
 // Against the real schema from the migrations of #4: the foreign key does the bank check.
 describe('POST /reports with PostgreSQL', () => {
-  const pool = createPool({ databaseUrl: TEST_DATABASE_URL, dbPoolMax: 2 });
-  const app = buildApp({ db: pool }, { logger: false });
-  const created: number[] = [];
+  const pool = new pg.Pool({ connectionString: TEST_DATABASE_URL, max: 1 });
+  let client: pg.PoolClient;
+  let app: ReturnType<typeof buildApp>;
 
-  beforeAll(() => app.ready());
-  afterAll(async () => {
-    await pool.query('delete from reports where id = any($1)', [created]);
-    await app.close();
-    await pool.end();
+  // Each test runs inside a transaction that is rolled back, so the test leaves nothing behind.
+  beforeEach(async () => {
+    client = await pool.connect();
+    await client.query('begin');
+    app = buildApp({ db: autocommit(client), getStatus: () => undefined }, { logger: false });
+    await app.ready();
   });
+  afterEach(async () => {
+    try {
+      await app.close();
+      await client.query('rollback');
+    } finally {
+      client.release();
+    }
+  });
+  afterAll(() => pool.end());
 
   it('saves a valid report and answers 201 with it', async () => {
     const before = Date.now();
@@ -114,11 +125,10 @@ describe('POST /reports with PostgreSQL', () => {
 
     expect(res.statusCode).toBe(201);
     const body = res.json();
-    created.push(body.id);
     expect(body).toEqual({ id: expect.any(Number), ...valid, createdAt: expect.any(String) });
     expect(Date.parse(body.createdAt)).toBeGreaterThanOrEqual(before - 1_000);
 
-    const { rows } = await pool.query(
+    const { rows } = await client.query(
       'select origin, destination, type from reports where id = $1',
       [body.id]
     );
@@ -133,7 +143,6 @@ describe('POST /reports with PostgreSQL', () => {
     });
 
     expect(res.statusCode).toBe(201);
-    created.push(res.json().id);
   });
 
   it('answers 400 for a bank that does not exist and saves nothing', async () => {
@@ -145,9 +154,27 @@ describe('POST /reports with PostgreSQL', () => {
 
     expect(res.statusCode).toBe(400);
     expect(res.json().message).toBe('Unknown bank in origin or destination');
-    const { rows } = await pool.query(
+    const { rows } = await client.query(
       "select count(*)::int as n from reports where destination = 'banco_falso'"
     );
     expect(rows[0].n).toBe(0);
   });
 });
+
+// Runs each query of the app in its own savepoint, as autocommit does outside a transaction.
+// A failed insert then undoes only itself, and the test transaction stays usable.
+function autocommit(client: pg.PoolClient): Db {
+  return {
+    query: async (...args: Parameters<pg.PoolClient['query']>) => {
+      await client.query('savepoint app_query');
+      try {
+        const result = await client.query(...args);
+        await client.query('release savepoint app_query');
+        return result;
+      } catch (err) {
+        await client.query('rollback to savepoint app_query');
+        throw err;
+      }
+    }
+  } as unknown as Db;
+}
