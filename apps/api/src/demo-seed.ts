@@ -7,8 +7,10 @@ export const WINDOW_MINUTES = 15;
 
 // One pair per level, the same pairs as the GET /status example in docs/api.md.
 // `recent` reports fall inside the window; `old` ones fall outside it and must not count.
-// The counts assume the thresholds of #6 put 0 reports in "normal", a few in "posibles_problemas"
-// and a dozen in "muchos_reportes". If #6 picks other thresholds, change only these numbers.
+// The counts assume the fixed thresholds of #6 put 0 reports in "normal", a few in
+// "posibles_problemas" and a dozen in "muchos_reportes". They hold while these pairs have fewer than
+// BASELINE_MIN_DAYS days of history at the hour (#33), as on a fresh database; the seed only writes
+// today's reports. If the thresholds change, change only these numbers.
 export const DEMO_PAIRS = [
   { origin: 'banesco', destination: 'mercantil', level: 'muchos_reportes', recent: 12, old: 0 },
   { origin: 'venezuela', destination: 'banesco', level: 'posibles_problemas', recent: 2, old: 0 },
