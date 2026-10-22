@@ -67,17 +67,18 @@ ni tienen secretos, pero sobran.
 
 ## Variables de entorno
 
-| Variable       | Valor por defecto            | Para qué sirve                                                                                   |
-| -------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
-| `PORT`         | `3000`                       | Puerto en el que escucha la API. Render lo define.                                               |
-| `HOST`         | `0.0.0.0`                    | Interfaz en la que escucha la API (ver arriba).                                                  |
-| `LOG_LEVEL`    | `info`                       | Nivel de detalle de los logs de Fastify: `debug`, `info`, `warn` o `error`.                      |
-| `CORS_ORIGIN`  | sin valor: CORS apagado      | Dominio del frontend que puede llamar a la API desde el navegador, por ejemplo la URL de Vercel. |
-| `NODE_ENV`     | `production` en la imagen    | Le dice a las librerías que corren en producción. El Dockerfile la fija; no hace falta pasarla.  |
-| `DATABASE_URL` | sin valor: la API no arranca | URL de PostgreSQL. En local, la de `compose.yaml`; en producción, la del pooler de Supabase.     |
-| `DB_POOL_MAX`  | `10`                         | Conexiones abiertas a PostgreSQL como máximo, de 1 a 15 (el límite de Supabase).                 |
+| Variable             | Valor por defecto            | Para qué sirve                                                                                   |
+| -------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| `PORT`               | `3000`                       | Puerto en el que escucha la API. Render lo define.                                               |
+| `HOST`               | `0.0.0.0`                    | Interfaz en la que escucha la API (ver arriba).                                                  |
+| `LOG_LEVEL`          | `info`                       | Nivel de detalle de los logs de Fastify: `debug`, `info`, `warn` o `error`.                      |
+| `CORS_ORIGIN`        | sin valor: CORS apagado      | Dominio del frontend que puede llamar a la API desde el navegador, por ejemplo la URL de Vercel. |
+| `NODE_ENV`           | `production` en la imagen    | Le dice a las librerías que corren en producción. El Dockerfile la fija; no hace falta pasarla.  |
+| `DATABASE_URL`       | sin valor: la API no arranca | URL de PostgreSQL. En local, la de `compose.yaml`; en producción, la del pooler de Supabase.     |
+| `DB_POOL_MAX`        | `10`                         | Conexiones abiertas a PostgreSQL como máximo, de 1 a 15 (el límite de Supabase).                 |
+| `STATUS_INTERVAL_MS` | `30000`                      | Cada cuántos milisegundos el worker recalcula el estado, de 1000 a 3600000 (#21).                |
 
-Si falta `DATABASE_URL`, o si `DB_POOL_MAX` no es un número de 1 a 15, la API escribe el motivo y
+Si falta `DATABASE_URL`, o si `DB_POOL_MAX` no es un número de 1 a 15 (o `STATUS_INTERVAL_MS` no es un número válido), la API escribe el motivo y
 termina con código 1 antes de escuchar (#20). La URL de Redis llega con #31; quien la agregue la
 documenta en esta tabla y en `.env.example`. Los valores reales nunca van en la imagen ni en el
 repositorio: en producción viven en las variables del servicio de Render.

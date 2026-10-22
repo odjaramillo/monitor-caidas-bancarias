@@ -59,8 +59,15 @@ transferencia de Banesco a Banesco también puede fallar.
 | `posibles_problemas` | Posibles problemas      |
 | `muchos_reportes`    | Muchos reportes         |
 
-El umbral que separa un nivel de otro lo decide el worker (#6) y no forma parte del contrato: puede
-cambiar sin tocar el frontend.
+El umbral que separa un nivel de otro lo decide el worker (#6, #33) y no forma parte del contrato:
+puede cambiar sin tocar el frontend. Sobre el conteo de 15 minutos, los umbrales fijos son: 0
+reportes es `normal`, de 1 a 4 es `posibles_problemas` y 5 o más es `muchos_reportes` (decisión D19
+en [`decisiones.md`](decisiones.md)). Cuando el par tiene historial suficiente, además compara con su
+línea base por hora (decisión D20): el promedio de reportes por ventana de 15 minutos a esa hora del
+día (hora de Venezuela, UTC-4) en los últimos 14 días, con reportes en al menos 3 días distintos a
+esa hora. Con línea base, un par pasa a `posibles_problemas` solo si supera el umbral fijo y llega a 2
+veces su línea base, y a `muchos_reportes` solo si supera el fijo y llega a 4 veces. Con historial
+corto se usan solo los umbrales fijos. El texto de `message` no cambia: solo cuenta personas (R4).
 
 ## Errores
 
