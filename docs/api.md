@@ -106,6 +106,8 @@ API.
   en `apps/api/src/app.ts`.
 - Todas las respuestas llevan `Access-Control-Allow-Origin` con el valor de `CORS_ORIGIN`. Si la
   llamada viene de otro dominio, ese valor no coincide y el navegador descarta la respuesta.
+- El navegador no deja leer `Retry-After` por defecto, así que la API también debe exponerla con la
+  opción `exposedHeaders` de `@fastify/cors`; ese cambio llega con #30, junto con el `429`.
 - CORS lo aplica el navegador: no frena a un script o a `curl`. Contra el abuso están los límites
   del Corte 2 (#30).
 - Las pruebas de estas reglas están en `apps/api/src/cors.test.ts`.
