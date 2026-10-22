@@ -2,9 +2,16 @@
 export const MAX_DB_POOL_SIZE = 15;
 export const DEFAULT_DB_POOL_SIZE = 10;
 
+// How often the worker recalculates the status. The frontend flags a status older than 3 minutes
+// (#26), so 30 s leaves room for several failed passes before the screen warns.
+export const DEFAULT_STATUS_INTERVAL_MS = 30_000;
+const MIN_STATUS_INTERVAL_MS = 1_000;
+const MAX_STATUS_INTERVAL_MS = 3_600_000;
+
 export interface Config {
   databaseUrl: string;
   dbPoolMax: number;
+  statusIntervalMs: number;
 }
 
 // Thrown when the environment is missing a value the API cannot start without.
@@ -21,7 +28,23 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     );
   }
 
-  return { databaseUrl, dbPoolMax: parsePoolSize(env.DB_POOL_MAX) };
+  return {
+    databaseUrl,
+    dbPoolMax: parsePoolSize(env.DB_POOL_MAX),
+    statusIntervalMs: parseStatusInterval(env.STATUS_INTERVAL_MS)
+  };
+}
+
+function parseStatusInterval(raw: string | undefined): number {
+  if (raw === undefined || raw.trim() === '') return DEFAULT_STATUS_INTERVAL_MS;
+
+  const ms = Number(raw);
+  if (!Number.isInteger(ms) || ms < MIN_STATUS_INTERVAL_MS || ms > MAX_STATUS_INTERVAL_MS) {
+    throw new ConfigError(
+      `STATUS_INTERVAL_MS must be a whole number of milliseconds from ${MIN_STATUS_INTERVAL_MS} to ${MAX_STATUS_INTERVAL_MS}, got "${raw}".`
+    );
+  }
+  return ms;
 }
 
 function parsePoolSize(raw: string | undefined): number {
