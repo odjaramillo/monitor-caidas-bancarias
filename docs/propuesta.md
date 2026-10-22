@@ -259,7 +259,7 @@ monitoreo y la prueba de carga.
 - Sondas (propuesta por aprobar): medir cada pocos minutos si la web pública de cada banco responde
   y cuánto tarda, como señal automática que no depende de usuarios.
 - Confirmar que todo el equipo puede defender Fastify y SvelteKit.
-- Elegir los 10 bancos del MVP.
+- Los 10 bancos del MVP: elegidos en el esquema inicial de datos (#4).
 - Revisar a mano si Downdetector ya tiene páginas de bancos venezolanos.
 - Revisar qué dice la ley bancaria vigente sobre difundir información de bancos.
 - Validar el enfoque: preguntar a 5 comercios y 5 personas cómo se enteran hoy de una falla en un

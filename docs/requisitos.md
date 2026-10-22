@@ -17,7 +17,7 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 | E1  | Repositorio GitHub con historial activo, README, `.gitignore` y `.env.example`                                     | p. 3, p. 5 | 1     | #2, #68                                       | parcial   |
 | E2  | URL pública funcional durante las revisiones; nada que dependa de localhost                                        | p. 3, p. 5 | 1     | #3, #8, #22, #68                              | pendiente |
 | E3  | Diagrama de arquitectura con frontend, backend/API, persistencia, caché y servicios externos, actualizado          | p. 3, p. 5 | 1, 2  | #10, #47, #58                                 | parcial   |
-| E4  | Problema, usuarios objetivo y alcance del MVP                                                                      | p. 5       | 1     | #11, #24, #50, #52, #56                       | pendiente |
+| E4  | Problema, usuarios objetivo y alcance del MVP                                                                      | p. 5       | 1     | #11, #24, #50, #52, #56                       | parcial   |
 | E5  | Aplicación básica funcional: flujo frontend → backend/API → persistencia                                           | p. 5       | 1     | #4, #5, #7, #12, #15, #16, #19, #20, #21, #54 | parcial   |
 | E6  | Docker en un componente clave, con explicación de imagen, contenedor, puertos, variables y ejecución               | p. 3, p. 5 | 1     | #8, #9, #19, #60                              | parcial   |
 | E7  | Modelos de servicio cloud identificados y justificados                                                             | p. 5       | 1     | #10, #58                                      | parcial   |
@@ -31,7 +31,7 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 | E15 | Infraestructura como código (opcional, bonificación)                                                               | p. 3       | Final | #60, #63, #64                                 | pendiente |
 | E16 | Informe técnico final en PDF con las 16 secciones mínimas                                                          | p. 6       | Final | #55, #56, #57, #58, #59, #60, #61, #62, #68   | pendiente |
 | E17 | Demostración en vivo sobre la versión desplegada y defensa de 20 minutos                                           | p. 7       | Final | #13, #48, #65, #66, #67, #68                  | pendiente |
-| E18 | Participación verificable de todos: historial, revisiones y respuestas individuales (60 % equipo, 40 % individual) | p. 5, p. 7 | Todos | #2, #13, #48, #50, #61, #67, #68              | pendiente |
+| E18 | Participación verificable de todos: historial, revisiones y respuestas individuales (60 % equipo, 40 % individual) | p. 5, p. 7 | Todos | #2, #13, #48, #50, #61, #67, #68              | parcial   |
 
 Evidencia de lo que ya está `parcial`:
 
@@ -69,13 +69,13 @@ Estas reglas aplican siempre y no tienen issue propio:
 
 | ID  | Requisito                                                                                                                                    | Corte | Issues                                   | Estado    |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ---------------------------------------- | --------- |
-| R1  | Estado por par de bancos (origen → destino): normal, posibles problemas o muchos reportes, comparando los últimos 15 minutos con lo habitual | 1, 2  | #4, #6, #7, #12, #15, #18, #21, #33, #37 | pendiente |
+| R1  | Estado por par de bancos (origen → destino): normal, posibles problemas o muchos reportes, comparando los últimos 15 minutos con lo habitual | 1, 2  | #4, #6, #7, #12, #15, #18, #21, #33, #37 | parcial   |
 | R2  | Reportar en un toque y sin cuenta: banco de origen, banco de destino y qué pasó; máximo un reporte por dispositivo, par y 15 minutos         | 1, 2  | #4, #5, #15, #16, #18, #30               | parcial   |
-| R3  | Detalle por banco: reportes de las últimas 24 horas como origen y como destino, y los pares más afectados                                    | 2     | #18, #25, #29                            | pendiente |
-| R4  | Nunca decir "el banco está caído"; decir "N personas reportan problemas con … en los últimos 15 minutos"                                     | 1     | #6, #7, #15                              | pendiente |
+| R3  | Detalle por banco: reportes de las últimas 24 horas como origen y como destino, y los pares más afectados                                    | 2     | #18, #25, #29                            | parcial   |
+| R4  | Nunca decir "el banco está caído"; decir "N personas reportan problemas con … en los últimos 15 minutos"                                     | 1     | #6, #7, #15                              | hecho     |
 | R5  | Frenar el abuso: límite por dispositivo e IP, CAPTCHA invisible y respuesta 429                                                              | 2     | #27, #30                                 | pendiente |
-| R6  | Seguir funcionando si cae PostgreSQL, Redis, el worker o el CAPTCHA (plan de la sección 7 de la [propuesta](propuesta.md))                   | 2     | #26, #31, #34, #38, #54                  | pendiente |
-| R7  | Responder "¿dónde se rompe este pago?" en menos de 5 segundos, en un teléfono con mala señal                                                 | 1     | #7, #16, #18                             | pendiente |
+| R6  | Seguir funcionando si cae PostgreSQL, Redis, el worker o el CAPTCHA (plan de la sección 7 de la [propuesta](propuesta.md))                   | 2     | #26, #31, #34, #38, #54                  | parcial   |
+| R7  | Responder "¿dónde se rompe este pago?" en menos de 5 segundos, en un teléfono con mala señal                                                 | 1     | #7, #16, #18                             | parcial   |
 | R8  | Quincena simulada con k6: de 5 a 500 lecturas y 50 reportes por segundo en 10 minutos, con un banco caído                                    | 2     | #45, #66                                 | pendiente |
 
 Fuera del MVP: cuentas de usuario, comentarios, aplicación móvil nativa, alertas por Telegram (D11)
