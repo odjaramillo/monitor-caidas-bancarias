@@ -65,13 +65,6 @@
 <a class="report" href="/reportar">Reportar un problema</a>
 
 <style>
-  :global(body) {
-    margin: 0;
-    font-family: system-ui, sans-serif;
-    color: #1b1b1b;
-    background: #fff;
-  }
-
   main {
     max-width: 32rem;
     margin: 0 auto;
