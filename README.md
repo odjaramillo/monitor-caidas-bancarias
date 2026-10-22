@@ -5,6 +5,16 @@ el de destino o el sistema que los conecta. La información sale de reportes de 
 
 Proyecto integrador de Computación en la Nube (INFO-02028), UCAB, 2026.
 
+## En producción
+
+| Pieza    | URL                                           | Dónde corre                |
+| -------- | --------------------------------------------- | -------------------------- |
+| Frontend | https://monitor-caidas-bancarias.vercel.app   | Vercel (#22)               |
+| API      | https://monitor-caidas-bancarias.onrender.com | Render, región Oregon (#8) |
+
+La API corre en el plan gratuito de Render: se duerme tras un rato sin tráfico, y la primera petición
+después puede tardar 50 segundos o más. `/health` dice si la API llega a la base de datos.
+
 ## Documentos
 
 | Documento                                                    | Qué tiene                                                         |
