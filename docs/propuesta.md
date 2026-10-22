@@ -49,7 +49,7 @@ No se encontró ningún servicio dedicado a fallas de bancos venezolanos.
 | X y notas de prensa             | Quejas sueltas de usuarios            | Hay que buscar y leer; la nota llega horas después              |
 | Canales oficiales de los bancos | Avisos en redes                       | Llegan tarde o nunca                                            |
 | GeoBlackout                     | Cortes de luz e internet en Venezuela | No cubre bancos ni pago móvil                                   |
-| Downdetector                    | Servicios globales                    | No se encontraron páginas de bancos venezolanos (por verificar) |
+| Downdetector                    | Servicios globales                    | No tiene páginas de bancos venezolanos (revisado el 22-10-2026) |
 
 ## 3. Propuesta y MVP
 
@@ -265,8 +265,7 @@ monitoreo y la prueba de carga.
 - Que todo el equipo pueda defender Fastify y SvelteKit: los cinco ya trabajan con el stack (#50).
   Cada uno explica su pieza en el ensayo del corte (#13).
 - Los 10 bancos del MVP: elegidos en el esquema inicial de datos (#4).
-- Revisar a mano si Downdetector ya tiene páginas de bancos venezolanos. Su protección bloquea las
-  consultas automáticas (#52).
+- Downdetector: revisado a mano el 22-10-2026. No tiene páginas de bancos venezolanos (#52).
 - Ley bancaria vigente: revisada. El artículo 226 de la Ley de Instituciones del Sector Bancario
   (2014) mantiene el delito de difundir información falsa (#52).
 - Validar el enfoque con 5 comercios y 5 personas: descartado. El enunciado pide presentar el
@@ -275,9 +274,8 @@ monitoreo y la prueba de carga.
 
 ## 11. Fuentes
 
-Consultadas el 05-10-2026. El tamaño del público y la ley vigente se revisaron en la página
-original el 22-10-2026 (#52). Lo marcado "por verificar" viene de resúmenes de búsqueda: la página
-original no se pudo abrir.
+Consultadas el 05-10-2026. El tamaño del público, la ley vigente y Downdetector se revisaron en la
+página original el 22-10-2026 (#52).
 
 - Enunciado: [`enunciado/enunciado-proyecto-nube-ucab.pdf`](enunciado/enunciado-proyecto-nube-ucab.pdf).
 - Incidentes: El Diario (15-05-2026, 01-12-2025, 01-06-2025), Bloomberg Línea (2026), Finanzas
