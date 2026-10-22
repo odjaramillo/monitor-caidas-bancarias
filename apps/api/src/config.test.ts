@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ConfigError, DEFAULT_DB_POOL_SIZE, loadConfig } from './config.js';
+import {
+  ConfigError,
+  DEFAULT_DB_POOL_SIZE,
+  DEFAULT_STATUS_INTERVAL_MS,
+  loadConfig
+} from './config.js';
 
 const url = 'postgresql://mcb:mcb@localhost:5432/mcb';
 
@@ -7,7 +12,8 @@ describe('loadConfig', () => {
   it('reads DATABASE_URL and uses the default pool size', () => {
     expect(loadConfig({ DATABASE_URL: url })).toEqual({
       databaseUrl: url,
-      dbPoolMax: DEFAULT_DB_POOL_SIZE
+      dbPoolMax: DEFAULT_DB_POOL_SIZE,
+      statusIntervalMs: DEFAULT_STATUS_INTERVAL_MS
     });
   });
 
@@ -29,4 +35,19 @@ describe('loadConfig', () => {
   it('accepts the Supabase limit of 15 connections', () => {
     expect(loadConfig({ DATABASE_URL: url, DB_POOL_MAX: '15' }).dbPoolMax).toBe(15);
   });
+
+  it('reads the status interval from STATUS_INTERVAL_MS', () => {
+    expect(loadConfig({ DATABASE_URL: url, STATUS_INTERVAL_MS: '5000' }).statusIntervalMs).toBe(
+      5000
+    );
+  });
+
+  it.each(['999', '3600001', '1.5', 'soon', '-1', '0'])(
+    'rejects STATUS_INTERVAL_MS=%s',
+    (value) => {
+      expect(() => loadConfig({ DATABASE_URL: url, STATUS_INTERVAL_MS: value })).toThrow(
+        /STATUS_INTERVAL_MS must be/
+      );
+    }
+  );
 });

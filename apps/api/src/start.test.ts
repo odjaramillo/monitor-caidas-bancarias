@@ -42,3 +42,33 @@ describe('createServer', () => {
     );
   });
 });
+
+describe('createServer status worker', () => {
+  it('serves GET /status once the first pass finishes', async () => {
+    const { app, worker } = createServer(
+      { DATABASE_URL: TEST_DATABASE_URL, STATUS_INTERVAL_MS: '60000' },
+      { logger: false }
+    );
+    await app.ready();
+    await worker.runOnce();
+
+    const res = await app.inject({ method: 'GET', url: '/status' });
+    await app.close();
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().pairs).toHaveLength(100);
+  });
+
+  it('starts the worker when the server is ready and stops it when the server closes', async () => {
+    const { app, worker } = createServer({ DATABASE_URL: TEST_DATABASE_URL }, { logger: false });
+    const start = vi.spyOn(worker, 'start');
+    const stop = vi.spyOn(worker, 'stop');
+
+    await app.ready();
+    expect(start).toHaveBeenCalledOnce();
+    expect(stop).not.toHaveBeenCalled();
+
+    await app.close();
+    expect(stop).toHaveBeenCalledOnce();
+  });
+});
