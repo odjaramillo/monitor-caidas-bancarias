@@ -35,9 +35,10 @@ Banco Plaza en plena quincena. Banco Plaza atribuyó la falla a la Cámara de Co
 | 17-10-2025       | Mercantil                                  | Falla                                                                            | Finanzas Digital |
 | 01-06-2025       | BDV                                        | Fallas reportadas por usuarios                                                   | El Diario        |
 
-Tamaño del público (por verificar): más de 20 millones de personas afiliadas a pago móvil y unas
-7.000 operaciones por minuto en 2026. En enero de 2026 el pago móvil pasó a ser el método de pago
-más usado.
+Tamaño del público: más de 20 millones de clientes afiliados a pago móvil, según Suiche 7B
+(septiembre de 2025). Cavecom-e reporta más de 8.500 operaciones por minuto en junio de 2026.
+Según Cavecom-e, el pago móvil agrupa el 63 % de las operaciones comerciales, por encima de los
+puntos de venta. Son cifras del sector, no del BCV.
 
 ### Cómo se entera la gente hoy
 
@@ -87,8 +88,11 @@ reportes quedan muy por encima de esa línea. Se cuenta un solo reporte por usua
 La línea base es más corta que la de Downdetector, porque el sistema empieza sin historial.
 
 **Riesgo legal.** En 2010 se acusó a dos usuarios de Twitter de difundir información falsa sobre la
-banca, con base en la Ley General de Bancos de 2001. Por eso la aplicación nunca dice "el banco está
-caído". Dice "N personas reportan problemas con pago móvil de Banco X en los últimos 15 minutos".
+banca, con base en la Ley General de Bancos de 2001. La ley vigente, de 2014, mantiene ese delito en
+su artículo 226. Castiga con prisión de nueve a once años a quien difunda noticias "falsas,
+tendenciosas, o no confirmadas en fuente oficial competente" que puedan afectar a un banco. Por eso
+la aplicación nunca dice "el banco está caído". Dice "N personas reportan problemas con pago móvil
+de Banco X en los últimos 15 minutos".
 
 ## 4. Arquitectura
 
@@ -257,23 +261,40 @@ monitoreo y la prueba de carga.
 ### Pendiente de decidir o verificar
 
 - Sondas (propuesta por aprobar): medir cada pocos minutos si la web pública de cada banco responde
-  y cuánto tarda, como señal automática que no depende de usuarios.
-- Confirmar que todo el equipo puede defender Fastify y SvelteKit.
+  y cuánto tarda, como señal automática que no depende de usuarios (#51).
+- Que todo el equipo pueda defender Fastify y SvelteKit: los cinco ya trabajan con el stack (#50).
+  Cada uno explica su pieza en el ensayo del corte (#13).
 - Los 10 bancos del MVP: elegidos en el esquema inicial de datos (#4).
-- Revisar a mano si Downdetector ya tiene páginas de bancos venezolanos.
-- Revisar qué dice la ley bancaria vigente sobre difundir información de bancos.
-- Validar el enfoque: preguntar a 5 comercios y 5 personas cómo se enteran hoy de una falla en un
-  pago.
+- Revisar a mano si Downdetector ya tiene páginas de bancos venezolanos. Su protección bloquea las
+  consultas automáticas (#52).
+- Ley bancaria vigente: revisada. El artículo 226 de la Ley de Instituciones del Sector Bancario
+  (2014) mantiene el delito de difundir información falsa (#52).
+- Validar el enfoque con 5 comercios y 5 personas: descartado. El enunciado pide presentar el
+  problema, los usuarios y el alcance, no entrevistas (#24).
 - Azure for Students como respaldo: descartado, no calificamos con el correo de la UCAB (#53).
 
 ## 11. Fuentes
 
-Consultadas el 05-10-2026. Lo marcado "por verificar" viene de resúmenes de búsqueda sin abrir la
-página original.
+Consultadas el 05-10-2026. El tamaño del público y la ley vigente se revisaron en la página
+original el 22-10-2026 (#52). Lo marcado "por verificar" viene de resúmenes de búsqueda: la página
+original no se pudo abrir.
 
 - Enunciado: [`enunciado/enunciado-proyecto-nube-ucab.pdf`](enunciado/enunciado-proyecto-nube-ucab.pdf).
 - Incidentes: El Diario (15-05-2026, 01-12-2025, 01-06-2025), Bloomberg Línea (2026), Finanzas
   Digital (17-10-2025).
 - Competencia: GeoBlackout; metodología publicada de Downdetector.
-- Riesgo legal: Reporteros Sin Fronteras y Global Voices (2010).
+- Tamaño del público:
+  [Banca y Negocios](https://www.bancaynegocios.com/en-venezuela-se-realizan-aproximadamente-6000-transacciones-de-pago-movil-interbancario-por-minuto/)
+  (26-09-2025),
+  [Finanzas Digital](https://finanzasdigital.com/pago-movil-alcanza-8500-transacciones-por-minuto/)
+  (27-08-2026) y
+  [CriptoNoticias](https://criptonoticias.com/comunidad/adopcion/pagomovil-63-operaciones-venezuela-compite-usdt)
+  (16-10-2026).
+- Riesgo legal:
+  [Reporteros Sin Fronteras](https://rsf.org/es/usuarios-de-twitter-se-arriesgan-once-a%C3%B1os-de-prisi%C3%B3n-por-criticar-el-sistema-bancario-del-pa%C3%ADs)
+  y Global Voices (2010). Ley de Instituciones del Sector Bancario, Decreto N° 1.402, Gaceta Oficial
+  N° 6.154 Extraordinario del 19-11-2014, reimpresa en la N° 40.557 del 08-12-2014: vigencia en la
+  [Asamblea Nacional](https://www.asambleanacional.gob.ve/leyes/sancionadas/decreto-n0-1402-mediante-el-cual-se-dicta-el-decreto-con-rango-valor-y-fuerza-de-ley-de-instituciones-del-sector-bancario)
+  y texto del artículo 226 en
+  [Pandectas Digital](https://pandectasdigital.blogspot.com/2016/08/decreto-con-rango-valor-y-fuerza-de-ley.html).
 - Plataformas: documentación de Render, Vercel, Supabase, Upstash y Cloudflare Turnstile.

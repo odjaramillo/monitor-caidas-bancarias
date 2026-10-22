@@ -17,7 +17,7 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 | E1  | Repositorio GitHub con historial activo, README, `.gitignore` y `.env.example`                                     | p. 3, p. 5 | 1     | #2, #68                                       | parcial   |
 | E2  | URL pública funcional durante las revisiones; nada que dependa de localhost                                        | p. 3, p. 5 | 1     | #3, #8, #22, #68                              | pendiente |
 | E3  | Diagrama de arquitectura con frontend, backend/API, persistencia, caché y servicios externos, actualizado          | p. 3, p. 5 | 1, 2  | #10, #47, #58                                 | parcial   |
-| E4  | Problema, usuarios objetivo y alcance del MVP                                                                      | p. 5       | 1     | #11, #24, #50, #52, #56                       | parcial   |
+| E4  | Problema, usuarios objetivo y alcance del MVP                                                                      | p. 5       | 1     | #11, #50, #52, #56                            | parcial   |
 | E5  | Aplicación básica funcional: flujo frontend → backend/API → persistencia                                           | p. 5       | 1     | #4, #5, #7, #12, #15, #16, #19, #20, #21, #54 | hecho     |
 | E6  | Docker en un componente clave, con explicación de imagen, contenedor, puertos, variables y ejecución               | p. 3, p. 5 | 1     | #8, #9, #19, #60                              | parcial   |
 | E7  | Modelos de servicio cloud identificados y justificados                                                             | p. 5       | 1     | #10, #58                                      | parcial   |
@@ -39,6 +39,9 @@ Evidencia de lo que ya está `parcial` o `hecho`:
   Falta revisarlo con el checklist de la entrega final (#68).
 - **E3.** [`arquitectura.md`](arquitectura.md) tiene el diagrama con frontend, API, persistencia, caché y servicios
   externos, y cómo se comunica cada componente (#10). Falta mantenerlo actualizado en el Corte 2 (#47) y en el informe (#58).
+- **E4.** [`propuesta.md`](propuesta.md) presenta el problema, los usuarios objetivo y el alcance del MVP (#11), y el
+  equipo la aprobó (#50). El tamaño del público y la ley vigente tienen fuente. Falta revisar Downdetector a mano (#52)
+  y llevarlo al informe (#56).
 - **E5.** La persistencia existe: las tablas `banks` y `reports` salen de una migración versionada, y la
   semilla carga los 10 bancos del MVP ([`datos.md`](datos.md), #4). El formulario envía el reporte a
   `POST /reports` (#16), la API lo guarda en PostgreSQL (#5), el worker recalcula el estado de cada par cada
