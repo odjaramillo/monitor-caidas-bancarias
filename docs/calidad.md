@@ -33,6 +33,21 @@ que el control falla: un control que nunca falla no prueba nada.
 | `compose.yaml` es válido                        | `docker compose config -q`                                                                                            | CI (`docker`)                                   | Un `compose.yaml` roto que rompe el entorno local de todos                            | 2026-10-20: un `compose.yaml` con YAML roto da exit 1 (#80)                                                                                                   |
 | Ningún secreto en el repositorio                | gitleaks sobre todo el historial                                                                                      | CI (`secrets`)                                  | Un token o una contraseña subidos por error                                           | 2026-10-20: un repo temporal con un token falso de GitHub da "leaks found: 1" y exit 1                                                                        |
 | Sin vulnerabilidades altas en producción        | `pnpm audit --prod --audit-level high`                                                                                | CI (`checks`)                                   | Una dependencia de producción con un aviso alto o crítico                             | 2026-10-20: un proyecto temporal con `lodash@4.17.15` da 3 avisos altos y exit 1 (#70)                                                                        |
+| `pnpm verify` repite el job `checks`            | Prueba de paridad en `tooling/repo-contract/ci-contract.test.js`                                                      | CI (`checks`: `pnpm test`)                      | Un comando de `checks` que `pnpm verify` no corre, o que corre en otro orden          | 2026-10-22: quitar `pnpm lint` de `verify` da exit 1 (#114)                                                                                                   |
+| Los jobs requeridos existen y revisan algo      | Prueba de contrato del CI en `tooling/repo-contract/ci-contract.test.js`                                              | CI (`checks`: `pnpm test`)                      | Un job requerido renombrado, un gate quitado o un job solo con preparación            | 2026-10-22: renombrar el job `secrets` da exit 1 (#114)                                                                                                       |
+
+## Comandos del CI que `pnpm verify` no corre
+
+`pnpm verify` corre los comandos del job `checks` en el mismo orden. Las pruebas de la API necesitan
+el PostgreSQL de `docker compose up -d`. La prueba de paridad falla si los dos listados se separan,
+salvo en estos comandos:
+
+| Comando del CI         | Por qué no corre en local                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm exec commitlint` | Revisa los commits del PR entre dos SHA que solo trae el evento del PR. En local, `.husky/commit-msg` revisa cada commit |
+
+`pnpm verify` tampoco corre los jobs `docker`, `secrets` e `issue`, porque no son parte de `checks`.
+`issue` lee la descripción del PR, que solo existe en GitHub.
 
 ## Controles en camino
 

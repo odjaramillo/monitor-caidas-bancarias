@@ -132,6 +132,7 @@ docker compose exec redis redis-cli
 | `pnpm typecheck` | `tsc` para la API, `svelte-check` para el frontend                                       |
 | `pnpm test`      | Vitest, con cobertura y su piso. La API necesita el PostgreSQL de `docker compose up -d` |
 | `pnpm build`     | Compila la API y genera el frontend estático                                             |
+| `pnpm verify`    | Corre los comandos del job `checks` del CI en el mismo orden                             |
 
 Para construir y correr la imagen de la API desde la raíz del repositorio:
 
@@ -155,6 +156,9 @@ curl localhost:3000/health   # {"status":"ok","database":"ok"}
 6. **Si el PR cumple un requisito, actualiza su estado** en `docs/requisitos.md` en el mismo PR.
 7. **Cada integrante usa su propia identidad de Git** (`git config user.name` y `user.email`).
    El historial es la evidencia del aporte de cada uno.
+8. **Antes de abrir el PR, corre `pnpm verify`.** Corre los comandos del job `checks` en el mismo
+   orden, salvo commitlint (ver [calidad](docs/calidad.md)). Necesita el PostgreSQL de
+   `docker compose up -d`.
 
 Idioma: docs, issues y PR en español; código, identificadores y commits en inglés (D9 en
 [decisiones](docs/decisiones.md)).
@@ -185,6 +189,10 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
 
 4. `issue`: exige `Closes #N` o `[sin-issue]`.
+
+Una prueba en `tooling/repo-contract` lee los workflows como texto. Falla si un job requerido
+desaparece o cambia de nombre, si un comando de gate deja de correr, si un job queda solo con
+pasos de preparación o si `pnpm verify` se separa de `checks`.
 
 ### Cobertura y dependencias
 
