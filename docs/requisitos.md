@@ -40,8 +40,7 @@ Evidencia de lo que ya está `parcial` o `hecho`:
 - **E3.** [`arquitectura.md`](arquitectura.md) tiene el diagrama con frontend, API, persistencia, caché y servicios
   externos, y cómo se comunica cada componente (#10). Falta mantenerlo actualizado en el Corte 2 (#47) y en el informe (#58).
 - **E4.** [`propuesta.md`](propuesta.md) presenta el problema, los usuarios objetivo y el alcance del MVP (#11), y el
-  equipo la aprobó (#50). El tamaño del público y la ley vigente tienen fuente. Falta revisar Downdetector a mano (#52)
-  y llevarlo al informe (#56).
+  equipo la aprobó (#50). Sus datos tienen fuente (#52). Falta llevarlo al informe (#56).
 - **E5.** La persistencia existe: las tablas `banks` y `reports` salen de una migración versionada, y la
   semilla carga los 10 bancos del MVP ([`datos.md`](datos.md), #4). El formulario envía el reporte a
   `POST /reports` (#16), la API lo guarda en PostgreSQL (#5), el worker recalcula el estado de cada par cada
