@@ -11,8 +11,11 @@
   const failures = Object.entries(FAILURE_TYPES);
 
   // The three answers. Empty until the person picks one.
-  let origin = $state<BankId | ''>('');
-  let destination = $state<BankId | ''>('');
+  // The banks start undefined: then each list reads its answer from the page when the JavaScript
+  // arrives, and keeps a bank picked before that. With '' Svelte selects the placeholder again.
+  // The radios keep their answer without this.
+  let origin = $state<BankId | ''>();
+  let destination = $state<BankId | ''>();
   let type = $state<FailureType | ''>('');
 
   let sendable = $derived(canSend(origin, destination, type, $form.state));
@@ -49,7 +52,7 @@
       <div class="question">
         <label for="origin"><span class="step">1</span> ¿De qué banco sale el pago?</label>
         <select id="origin" bind:value={origin}>
-          <option value="" disabled>Elige un banco</option>
+          <option value="" disabled selected>Elige un banco</option>
           {#each banks as [id, name] (id)}
             <option value={id}>{name}</option>
           {/each}
@@ -59,7 +62,7 @@
       <div class="question">
         <label for="destination"><span class="step">2</span> ¿A qué banco llega el pago?</label>
         <select id="destination" bind:value={destination}>
-          <option value="" disabled>Elige un banco</option>
+          <option value="" disabled selected>Elige un banco</option>
           {#each banks as [id, name] (id)}
             <option value={id}>{name}</option>
           {/each}

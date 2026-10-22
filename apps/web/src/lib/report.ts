@@ -29,13 +29,14 @@ export const REPORT_MESSAGES = {
 const TIMEOUT_MS = 8000;
 
 // The send button works only when the three answers are chosen and no report is on its way.
+// A bank list is undefined until the page reads its answer, and '' until the person picks a bank.
 export function canSend(
-  origin: string,
-  destination: string,
+  origin: string | undefined,
+  destination: string | undefined,
   type: string,
   state: ReportFormState['state']
 ): boolean {
-  return origin !== '' && destination !== '' && type !== '' && state !== 'sending';
+  return Boolean(origin) && Boolean(destination) && type !== '' && state !== 'sending';
 }
 
 // Never throws: the form always gets a state to show.

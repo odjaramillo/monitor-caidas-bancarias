@@ -59,6 +59,16 @@ describe('report page', () => {
     expect(body).not.toMatch(/<textarea|type="text"/);
   });
 
+  it('selects the placeholder of both bank lists in the saved page, and no bank', () => {
+    const { body } = renderPage({ state: 'idle' });
+
+    // Without it the browser selects the first bank. With it, the page that hydrates reads
+    // "no bank yet", or the bank the person picked before the JavaScript arrived.
+    const placeholders = body.match(/<option value=""[^>]*selected[^>]*>Elige un banco<\/option>/g);
+    expect(placeholders).toHaveLength(2);
+    expect(body).not.toMatch(/<option value="[^"]+"[^>]*selected/);
+  });
+
   it('keeps the send button off until the three answers are chosen', () => {
     const { body } = renderPage({ state: 'idle' });
 

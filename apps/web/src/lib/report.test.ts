@@ -29,6 +29,11 @@ describe('canSend', () => {
     expect(canSend('banesco', 'mercantil', '', 'idle')).toBe(false);
   });
 
+  it('is false while a bank list has not read its answer from the page yet', () => {
+    expect(canSend(undefined, 'mercantil', 'no_sale', 'idle')).toBe(false);
+    expect(canSend('banesco', undefined, 'no_sale', 'idle')).toBe(false);
+  });
+
   it('allows sending again after an error, but not while a report travels', () => {
     expect(canSend('banesco', 'mercantil', 'no_sale', 'error')).toBe(true);
     expect(canSend('banesco', 'mercantil', 'no_sale', 'sending')).toBe(false);
