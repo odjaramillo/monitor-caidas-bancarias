@@ -23,8 +23,16 @@ const HOOKS = {
   ],
   'pre-commit': [{ step: 'pnpm exec lint-staged', job: 'checks', ci: /^pnpm lint$/ }],
   'pre-push': [
-    { step: 'pnpm --filter "...[$base]" typecheck', job: 'checks', ci: /^pnpm typecheck$/ },
-    { step: 'pnpm --filter "...[$base]" test', job: 'checks', ci: /^pnpm test$/ }
+    {
+      step: `pnpm --filter "...[$base]" --filter '!monitor-caidas-bancarias' run --if-present typecheck`,
+      job: 'checks',
+      ci: /^pnpm typecheck$/
+    },
+    {
+      step: `pnpm --filter "...[$base]" --filter '!monitor-caidas-bancarias' test`,
+      job: 'checks',
+      ci: /^pnpm test$/
+    }
   ]
 };
 
@@ -62,6 +70,22 @@ describe('Git hooks contract', () => {
     expect(ciStep, `step for ${ci}`).toBeDefined();
     expect(isCheckStep(ciJob, ciStep), 'the step is skipped or cannot fail the job').toBe(true);
   });
+});
+
+// The root scripts run every package with `pnpm -r` (issue #128).
+// A filtered step that selects the root package runs each package twice, in parallel.
+describe('pre-push selection', () => {
+  const rootName = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).name;
+
+  it.each(hookSteps(readHook('pre-push')).filter((step) => step.includes('--filter')))(
+    'step "%s" excludes the root package after its last inclusion',
+    (step) => {
+      const filters = [...step.matchAll(/--filter (?:"([^"]*)"|'([^']*)')/g)].map(
+        (match) => match[1] ?? match[2]
+      );
+      expect(filters.at(-1)).toBe(`!${rootName}`);
+    }
+  );
 });
 
 describe('hook reader', () => {
