@@ -52,6 +52,13 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # Browser tests of the two screens (issue #111). They start the API from the build above with
+      # this job's PostgreSQL, and serve the static frontend. The frontend calls the API at its
+      # default address, localhost:3000.
+      - name: Install Chromium for the browser tests
+        run: pnpm --filter web exec playwright install --with-deps chromium
+      - name: Browser tests (Playwright)
+        run: pnpm --filter web test:e2e
 
   docker:
     runs-on: ubuntu-latest

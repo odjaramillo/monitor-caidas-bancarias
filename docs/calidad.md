@@ -36,6 +36,7 @@ que el control falla: un control que nunca falla no prueba nada.
 | Sin vulnerabilidades altas en producción        | `pnpm audit --prod --audit-level high`                                                                                | CI (`checks`)                                   | Una dependencia de producción con un aviso alto o crítico                             | 2026-10-20: un proyecto temporal con `lodash@4.17.15` da 3 avisos altos y exit 1 (#70)                                                                        |
 | `pnpm verify` repite el job `checks`            | Prueba de paridad en `tooling/repo-contract/ci-contract.test.js`                                                      | CI (`checks`: `pnpm test`)                      | Un comando de `checks` que `pnpm verify` no corre, o que corre en otro orden          | 2026-10-22: quitar `pnpm lint` de `verify` da exit 1 (#114)                                                                                                   |
 | Los jobs requeridos existen y revisan algo      | Prueba de contrato del CI en `tooling/repo-contract/ci-contract.test.js`                                              | CI (`checks`: `pnpm test`)                      | Un job requerido renombrado, un gate quitado o un job solo con preparación            | 2026-10-22: renombrar el job `secrets` da exit 1 (#114)                                                                                                       |
+| Las dos pantallas funcionan en un navegador     | Playwright con Chromium (`apps/web/e2e`) contra el build estático y la API                                            | CI (`checks`: test:e2e)                         | Un fallo que solo se ve en el navegador, como el de #103                              | 2026-10-22: sin el arreglo de #103, la prueba del JavaScript tardío da exit 1; `->` en vez de `→` en los pares da exit 1 (#111)                               |
 | Los hooks no pierden pasos y el CI los repite   | Prueba de los hooks en `tooling/repo-contract/hooks-contract.test.js`                                                 | CI (`checks`: `pnpm test`)                      | Un hook borrado, un paso quitado o un paso que ningún job requerido repite            | 2026-10-22: quitar `test` de `.husky/pre-push` da exit 1 (#112)                                                                                               |
 
 ## Comandos del CI que `pnpm verify` no corre
@@ -44,9 +45,11 @@ que el control falla: un control que nunca falla no prueba nada.
 el PostgreSQL de `docker compose up -d`. La prueba de paridad falla si los dos listados se separan,
 salvo en estos comandos:
 
-| Comando del CI         | Por qué no corre en local                                                                                                |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm exec commitlint` | Revisa los commits del PR entre dos SHA que solo trae el evento del PR. En local, `.husky/commit-msg` revisa cada commit |
+| Comando del CI                                                   | Por qué no corre en local                                                                                                                                          |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm exec commitlint`                                           | Revisa los commits del PR entre dos SHA que solo trae el evento del PR. En local, `.husky/commit-msg` revisa cada commit                                           |
+| `pnpm --filter web exec playwright install --with-deps chromium` | Instala Chromium y paquetes del sistema con permisos de administrador. En local se instala una vez: `pnpm --filter web exec playwright install chromium`           |
+| `pnpm --filter web test:e2e`                                     | Deja reportes reales en la base, y esos reportes hacen fallar las pruebas de la API durante 15 minutos. En local se corre aparte, con la base `mcb_e2e` del README |
 
 `pnpm verify` tampoco corre los jobs `docker`, `secrets` e `issue`, porque no son parte de `checks`.
 `issue` lee la descripción del PR, que solo existe en GitHub.
