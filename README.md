@@ -176,6 +176,9 @@ antes de empezar. Para usar otro puerto de la API, pon la misma `PUBLIC_API_URL`
 8. **Antes de abrir el PR, corre `pnpm verify`.** Corre los comandos del job `checks` en el mismo
    orden, salvo commitlint (ver [calidad](docs/calidad.md)). Necesita el PostgreSQL de
    `docker compose up -d`.
+9. **Antes de cada push, un hook corre el typecheck y las pruebas de lo cambiado.** Solo revisa
+   los paquetes que cambió el push y se detiene en el primer fallo. Si cambiaste la API, necesita
+   el PostgreSQL de `docker compose up -d`. La suite completa corre en el CI y en `pnpm verify`.
 
 Idioma: docs, issues y PR en español; código, identificadores y commits en inglés (D9 en
 [decisiones](docs/decisiones.md)).
