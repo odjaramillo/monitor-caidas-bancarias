@@ -7,13 +7,22 @@ on:
 permissions: {}
 
 jobs:
+  # A required check: no job-level `if:`. A skipped job counts as a pass in the ruleset.
   issue:
     runs-on: ubuntu-latest
     steps:
       - name: El PR enlaza su issue
         env:
           BODY: ${{ github.event.pull_request.body }} # read from env, never interpolated into the script
+          # The PR author, not the actor: a push by a person to a Dependabot PR keeps the exception.
+          # A user login cannot contain `[`. Only the Dependabot app has this login.
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
+          # Dependabot writes its own PR body, and the body links no issue (#46).
+          if [ "$PR_AUTHOR" = 'dependabot[bot]' ]; then
+            echo "::notice::PR de Dependabot: no necesita 'Closes #N' (#46)."
+            exit 0
+          fi
           if printf '%s' "$BODY" | grep -Eiq '\b(close[sd]?|fix(e[sd])?|resolve[sd]?) #[0-9]+|\[sin-issue\]'; then
             exit 0
           fi

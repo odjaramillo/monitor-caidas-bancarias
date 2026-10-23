@@ -2,6 +2,7 @@
 // The ruleset of `main` matches status checks by job name, so a renamed job removes its gate in silence.
 // These tests read the workflow files as text and fail when a gate disappears.
 
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -160,5 +161,46 @@ describe('workflow reader', () => {
       '\n'
     );
     expect(parseJobs(text).map(contextOf)).toEqual(['checks']);
+  });
+});
+
+// Runs the step script like GitHub Actions does for a `bash` shell.
+function runStep(step, env) {
+  const result = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', step.run], {
+    env: { PATH: process.env.PATH, ...env },
+    encoding: 'utf8'
+  });
+  return { status: result.status, stdout: result.stdout };
+}
+
+describe('issue gate', () => {
+  const issue = jobByContext(readWorkflows(workflowsDir), 'issue');
+  const step = issue.steps.find((candidate) => /grep -Eiq/.test(candidate.run ?? ''));
+  const prWorkflow = readFileSync(join(workflowsDir, 'pr.yml'), 'utf8');
+
+  it('runs for every PR: a skipped required check counts as a pass', () => {
+    expect(issue.if).toBeNull();
+    expect(step.if).toBeUndefined();
+  });
+
+  it('reads the PR author, not the actor of the event', () => {
+    expect(prWorkflow).toMatch(
+      /^ +PR_AUTHOR: \$\{\{ github\.event\.pull_request\.user\.login \}\}/m
+    );
+  });
+
+  it.each([
+    { author: 'odjaramillo', body: 'Closes #5', status: 0 },
+    { author: 'odjaramillo', body: 'Cierra #5', status: 1 },
+    { author: 'odjaramillo', body: '', status: 1 },
+    { author: 'dependabot', body: '', status: 1 },
+    { author: 'dependabot[bot]', body: '', status: 0 }
+  ])('gives exit $status to a PR of $author with the body "$body"', ({ author, body, status }) => {
+    expect(runStep(step, { PR_AUTHOR: author, BODY: body }).status).toBe(status);
+  });
+
+  it('says why a Dependabot PR passes without an issue', () => {
+    const { stdout } = runStep(step, { PR_AUTHOR: 'dependabot[bot]', BODY: '' });
+    expect(stdout).toMatch(/^::notice::.*Dependabot/m);
   });
 });
