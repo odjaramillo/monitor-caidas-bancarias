@@ -172,19 +172,36 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 - Los issues del corte siguiente existen desde el inicio como borrador. Sus criterios se refinan
   cuando cierra el corte anterior.
 
-## CI
+## CI y despliegue
 
-`.github/workflows/ci.yml` corre en cada PR y en cada push a `main`:
+El pipeline empieza con un PR hacia `main` y termina con la prueba de la API desplegada.
 
-1. `checks`: instala con el lockfile, revisa los mensajes de commit, lint, typecheck, pruebas y build.
-2. `docker`: valida `compose.yaml`, construye la imagen de la API, comprueba que no arranca sin
-   `DATABASE_URL`, la arranca con PostgreSQL y exige que `/health` responda
-   `{"status":"ok","database":"ok"}` en 30 s.
-3. `secrets`: gitleaks revisa todo el historial.
+1. **Checks del PR.** `.github/workflows/ci.yml` corre en cada PR y en cada push a `main`:
+   - `checks`: instala con el lockfile, revisa los mensajes de commit, lint, typecheck, pruebas y
+     build.
+   - `docker`: valida `compose.yaml`, construye la imagen de la API, comprueba que no arranca sin
+     `DATABASE_URL`, la arranca con PostgreSQL y exige que `/health` responda
+     `{"status":"ok","database":"ok"}` en 30 s.
+   - `secrets`: gitleaks revisa todo el historial.
 
-`.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
+   `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
+   - `issue`: exige `Closes #N` o `[sin-issue]`.
 
-4. `issue`: exige `Closes #N` o `[sin-issue]`.
+   Vercel publica además una vista previa del frontend para cada PR.
+
+2. **Merge.** `main` exige `checks`, `docker`, `secrets` e `issue` en verde y la rama al día. El
+   merge es un push a `main`, así que `ci.yml` corre otra vez sobre el commit fusionado.
+3. **Frontend en Vercel.** Vercel despliega `main` en cada push.
+4. **API en Render.** Render despliega `main` con Auto-Deploy "After CI Checks Pass": espera los
+   checks del commit fusionado y no despliega si alguno falla.
+5. **Prueba después del despliegue.** `.github/workflows/deploy-check.yml` corre cuando `CI`
+   termina en verde sobre un push a `main`. Su job `api-health` llama al `/health` público de la
+   API cada 20 s, con `curl --max-time 60`, durante 15 minutos como máximo. Pasa cuando la API
+   responde 200 con `commit` igual al commit fusionado. Si no, falla. No es un check requerido,
+   porque corre después del merge.
+
+El despliegue del frontend no tiene prueba posterior. Vercel no crea despliegues de GitHub en
+este repositorio, solo un estado del commit, y el sitio estático no dice qué commit sirve.
 
 ### Cobertura y dependencias
 

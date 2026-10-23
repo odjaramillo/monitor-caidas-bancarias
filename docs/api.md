@@ -258,14 +258,26 @@ Solo justo después de arrancar, antes de que termine el primer cálculo:
 
 ## `GET /health`
 
-Lo llaman el monitor de disponibilidad (#43), el chequeo de Render (#8) y el CI. Hace una consulta
-mínima a PostgreSQL (`select 1`) para saber si la base responde.
+Lo llaman el monitor de disponibilidad (#43), el chequeo de Render (#8), el CI y la prueba después
+del despliegue (#41). Hace una consulta mínima a PostgreSQL (`select 1`) para saber si la base
+responde.
 
 ### Respuesta `200 OK`
 
 ```json
 { "status": "ok", "database": "ok" }
 ```
+
+En Render, la respuesta trae además el campo `commit`: el SHA completo del commit desplegado, que
+Render pone en la variable `RENDER_GIT_COMMIT`. Fuera de Render la variable no existe y el campo no
+aparece.
+
+```json
+{ "status": "ok", "database": "ok", "commit": "7c10c71a2b3c4d5e6f708192a3b4c5d6e7f80912" }
+```
+
+La prueba después del despliegue compara `commit` con el commit fusionado. Así distingue la versión
+nueva de la anterior, que Render mantiene viva hasta que la nueva arranca.
 
 ### Respuesta `503 Service Unavailable`
 

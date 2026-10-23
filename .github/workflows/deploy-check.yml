@@ -1,0 +1,56 @@
+name: Deploy check
+
+# Render deploys main only after CI passes on it (Auto-Deploy "After CI Checks Pass", #8).
+# A job inside CI runs before that deploy, so this workflow starts when CI ends on main.
+# It runs after the merge, so it is not a required check for PRs.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions: {}
+
+# A newer push to main replaces the older deploy, so the newer run cancels the older one.
+concurrency:
+  group: deploy-check
+  cancel-in-progress: true
+
+jobs:
+  api-health:
+    # Render does not deploy a commit whose CI failed, so then there is no deploy to check.
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20 # hard stop above the 15 min deadline of the step
+    steps:
+      - name: The API on Render answers /health with 200 and the merged commit
+        env:
+          HEALTH_URL: https://monitor-caidas-bancarias.onrender.com/health
+          EXPECTED_COMMIT: ${{ github.event.workflow_run.head_sha }}
+          # Premise (2026-10-22, not measured yet): Render builds the Docker image and starts it
+          # in less than 15 min on the free plan. Re-evaluate with the durations of the first runs.
+          DEADLINE_SECONDS: 900
+          INTERVAL_SECONDS: 20
+          # The README says a sleeping API can take 50 s or more to answer the first request.
+          CURL_MAX_TIME: 60
+        run: |
+          # Render keeps the old instance until the new one starts. A 200 alone can come from the old
+          # instance, so the step also waits until /health reports the commit that CI checked.
+          deadline=$((SECONDS + DEADLINE_SECONDS))
+          while :; do
+            out=$(curl -sS --max-time "$CURL_MAX_TIME" -w '\n%{http_code}' "$HEALTH_URL") || true
+            code=${out##*$'\n'}
+            body=${out%$'\n'*}
+            commit=$(printf '%s' "$body" | jq -r '.commit // empty' 2>/dev/null) || commit=''
+            if [ "$code" = 200 ] && [ "$commit" = "$EXPECTED_COMMIT" ]; then
+              echo "Render serves $EXPECTED_COMMIT and /health answers 200: $body"
+              exit 0
+            fi
+            echo "Waiting for $EXPECTED_COMMIT: HTTP $code, commit '${commit:-none}'."
+            if [ $((SECONDS + INTERVAL_SECONDS)) -ge "$deadline" ]; then
+              break
+            fi
+            sleep "$INTERVAL_SECONDS"
+          done
+          echo "::error::$HEALTH_URL did not answer 200 with commit $EXPECTED_COMMIT in $DEADLINE_SECONDS s."
+          exit 1
