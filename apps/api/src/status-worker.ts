@@ -50,11 +50,13 @@ export interface StatusWorker {
 
 // createStatusWorker recalculates every pair in one pass (R1) and keeps the result in memory.
 // GET /status reads that snapshot, so requests never wait for the database.
+// eslint-disable-next-line max-lines-per-function -- Longer than the cap before #120. Tracking issue: #135.
 export function createStatusWorker({ db, intervalMs, log }: StatusWorkerDeps): StatusWorker {
   let status: Status | undefined;
   let timer: NodeJS.Timeout | undefined;
   let inFlight: Promise<void> | undefined;
 
+  // eslint-disable-next-line max-lines-per-function -- Longer than the cap before #120. Tracking issue: #135.
   async function pass(): Promise<void> {
     const now = new Date();
     const oldest = new Date(now.getTime() - WINDOW_MINUTES * 60_000);

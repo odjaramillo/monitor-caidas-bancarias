@@ -276,6 +276,9 @@ vencido, y con un paquete sin script `test`.
   commit de la medición.
 - Cuando tu PR sube la cobertura, sube también el piso a los números nuevos que imprime
   `pnpm test`. Nunca lo bajes para que el CI pase: escribe la prueba que falta.
+- ESLint limita cada función de producción a 4 parámetros, 3 niveles de bloques y 31 líneas, justo
+  sobre el p95 medido. La medición y las funciones viejas sobre el tope están en
+  [calidad](docs/calidad.md).
 - `checks` también corre `pnpm audit:prod`. El script `tooling/repo-contract/audit-gate.js` corre
   `pnpm audit --prod --json` y falla si una dependencia de producción tiene un aviso alto o
   crítico que no está en `audit-allowlist.json`. También falla si el registro no responde o si la
