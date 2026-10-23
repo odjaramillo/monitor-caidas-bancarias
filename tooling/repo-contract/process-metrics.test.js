@@ -134,7 +134,10 @@ describe('command-line arguments', () => {
     [['--repo', 'app'], 'Give --repo <owner>/<name> or set GITHUB_REPOSITORY.'],
     [['--repo', 'team/app', '--weeks', '0'], '--weeks must be a whole number from 1 to 104.'],
     [['--repo', 'team/app', '--weeks', 'x'], '--weeks must be a whole number from 1 to 104.'],
-    [['--repo', 'team/app', '--color'], 'Unknown argument: --color']
+    [['--repo', 'team/app', '--color'], 'Unknown argument: --color'],
+    [['--repo', 'team/app', '--json'], 'Give a value after --json.'],
+    [['--repo', 'team/app', '--base'], 'Give a value after --base.'],
+    [['--json', '--repo', 'team/app'], 'Give a value after --json.']
   ])('rejects %j', (argv, message) => {
     expect(() => parseArgs(argv, {})).toThrow(message);
   });

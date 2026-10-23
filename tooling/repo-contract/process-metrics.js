@@ -173,7 +173,12 @@ export function parseArgs(argv, env) {
   for (let i = 0; i < argv.length; i += 2) {
     const key = FLAGS[argv[i]];
     if (!key) throw new Error(`Unknown argument: ${argv[i]}`);
-    args[key] = argv[i + 1];
+    // A flag at the end, or a flag followed by another flag, has no value.
+    const value = argv[i + 1];
+    if (value === undefined || value.startsWith('--')) {
+      throw new Error(`Give a value after ${argv[i]}.`);
+    }
+    args[key] = value;
   }
   return checkArgs(args);
 }
