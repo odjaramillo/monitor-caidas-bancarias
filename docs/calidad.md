@@ -61,6 +61,7 @@ en la de convenciones.
 | Topes de parámetros, anidamiento y largo        | `max-params` 4, `max-depth` 3 y `max-lines-per-function` 31 en `eslint.config.js`, sobre el p95 medido                | hook y CI (`checks`: `pnpm lint`)               | Una función nueva con 5 parámetros, 4 niveles de bloques o más de 31 líneas           | 2026-10-22: un parámetro, un nivel o una línea más que el tope en `levels.ts` da exit 1 en `pnpm lint`; justo en el tope da exit 0 (#120)                     |
 | Las excepciones a los topes solo bajan          | `tooling/repo-contract/function-shape.test.js` fija la lista; `reportUnusedDisableDirectives` en `eslint.config.js`   | CI (`checks`: `pnpm test` y `pnpm lint`)        | Un `eslint-disable` nuevo de un tope, uno sin su issue, o uno que ya no oculta nada   | 2026-10-22: un `eslint-disable` de más o de menos da exit 1 en las pruebas; uno que no oculta un error da exit 1 en `pnpm lint` (#120)                        |
 | El piso de cobertura sube con la cobertura      | `pnpm coverage:check` (`tooling/repo-contract/coverage-ratchet.js`); `pnpm coverage:ratchet` escribe el piso nuevo    | CI (`checks`: `pnpm coverage:check`)            | Un PR que sube la cobertura y deja el piso viejo, que luego deja bajarla sin aviso    | 2026-10-22: 0,11 puntos sobre el piso da exit 1, 0,1 da exit 0; sin resumen da exit 1; bajo el piso, `pnpm test` da exit 1 (#120)                             |
+| Las métricas solo leen y no bloquean            | Prueba en `tooling/repo-contract/metrics-workflow.test.js` sobre `.github/workflows/metrics.yml`                      | CI (`checks`: `pnpm test`)                      | Un workflow de métricas que pide escritura, hace `git push` o corre en cada PR        | 2026-10-22: `contents: write` o un paso `git push` en `.github/workflows/metrics.yml` da exit 1 (#121)                                                        |
 
 ## Medición de la forma de las funciones
 
@@ -116,3 +117,24 @@ del semestre.
 | Cada integrante usa su propia identidad de Git                                    | Git acepta cualquier nombre y correo; solo la firma de commits lo comprobaría, y el equipo no firma | `git shortlog -sn` antes de cada corte                       |
 | El tamaño del PR                                                                  | D15: sin límite automático                                                                          | Quien revisa el PR                                           |
 | Docs, issues y PR en español; código y commits en inglés                          | D9. El idioma de un texto es juicio, no sintaxis                                                    | Quien revisa el PR                                           |
+
+## Métricas del proceso
+
+`.github/workflows/metrics.yml` calcula cada lunes, o a pedido, cuánto tarda un issue en llegar a
+`main` y cuántos PR se integran por semana. Lee el tracker con `gh api graphql` y nunca escribe en
+el repositorio. Las métricas no son un control: no rechazan nada y nunca hacen fallar un build. No
+tienen metas. La fila "Las métricas solo leen y no bloquean" de la tabla de arriba es el control
+del workflow, no de los números.
+
+- **Cómo se enlaza un PR con su issue.** Por las referencias de cierre del PR
+  (`closingIssuesReferences`): el `Closes #N` de la descripción o el enlace hecho a mano en GitHub.
+  Solo cuentan los issues de este repositorio y los PR integrados en `main`.
+- **Lead time.** Días desde que se abre el issue hasta el merge del primer PR que lo cierra. Un
+  issue cuenta una sola vez, en la semana de ese merge.
+- **PR sin issue.** Un PR con `[sin-issue]` o de Dependabot cuenta como PR integrado, pero no da
+  lead time.
+- **Mediana y p85.** Interpolan entre los dos valores más cercanos. La semana actual sale marcada
+  como `(in progress)`.
+
+Si una corrida falla, por ejemplo porque la API de GitHub no responde, queda en rojo en Actions.
+No bloquea ningún PR ni ningún merge.
