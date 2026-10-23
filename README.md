@@ -311,3 +311,24 @@ todavía no hay una versión con el arreglo:
    aviso: actualiza la dependencia y borra la entrada, o la renueva con un motivo nuevo.
 
 El script avisa, sin fallar, cuando una entrada ya no coincide con ningún aviso. Bórrala.
+
+### Métricas del proceso
+
+El workflow `Metrics` (`.github/workflows/metrics.yml`) corre cada lunes a las 06:00 UTC. También
+se puede correr a mano desde Actions con "Run workflow". Para verlas, abre la última corrida de
+`Metrics` en la pestaña Actions: la tabla está en el resumen del job y el JSON en el artefacto
+`process-metrics`. El workflow solo lee el tracker, no es un check requerido y nunca hace commits.
+
+La tabla tiene una fila por semana ISO, de las últimas 12, y una fila de total:
+
+| Columna                 | Qué significa                                                                |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| Merged PRs              | PR integrados en `main` esa semana                                           |
+| PRs without issue       | De esos, los que no cierran ningún issue, como `[sin-issue]` o Dependabot    |
+| Issues closed           | Issues cerrados por primera vez por un PR integrado esa semana               |
+| Lead time median (days) | La mediana de los días desde que se abrió cada issue hasta el merge de su PR |
+| Lead time p85 (days)    | El 85 % de esos issues tardó esos días o menos                               |
+
+Un PR se enlaza con su issue por su `Closes #N` o por el enlace hecho a mano en GitHub. Para
+calcularlas en local: `node tooling/repo-contract/process-metrics.js --repo <dueño>/<repo>`. Usa
+tu sesión de `gh`.

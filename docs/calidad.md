@@ -58,6 +58,7 @@ en la de convenciones.
 | Un `.skip` lleva su issue y su vencimiento      | Escaneo de `tooling/repo-contract/test-hygiene.js`: `// skip: #N until AAAA-MM-DD` en la línea anterior               | CI (`checks`: `pnpm test`)                      | Un `.skip` sin issue ni fecha, o vencido, que saca una prueba del conteo sin aviso    | 2026-10-22: un `.skip` sin marca, o con fecha pasada, en `levels.test.ts` da exit 1 en las pruebas de `tooling/repo-contract` (#118)                          |
 | Cada paquete del workspace tiene script `test`  | Prueba en `tooling/repo-contract/test-hygiene.test.js` sobre `pnpm-workspace.yaml` y cada `package.json`              | CI (`checks`: `pnpm test`)                      | Un paquete sin pruebas que `pnpm -r test` salta sin aviso                             | 2026-10-22: quitar el script `test` de `apps/web/package.json` da exit 1 (#118). Sin el de `tooling/repo-contract`, esta prueba no corre                      |
 | Dependabot propone actualizaciones cada mes     | `.github/dependabot.yml` (mensual, un grupo por ecosistema), fijado por `tooling/repo-contract/dependabot.test.js`    | CI (`checks`: `pnpm test`)                      | Un `dependabot.yml` borrado, semanal o sin grupo, que deja de abrir un PR al mes      | 2026-10-22: `interval: weekly` o un grupo sin `*` da exit 1; el archivo pasa el esquema de SchemaStore (#46)                                                  |
+| Las métricas solo leen y no bloquean            | Prueba en `tooling/repo-contract/metrics-workflow.test.js` sobre `.github/workflows/metrics.yml`                      | CI (`checks`: `pnpm test`)                      | Un workflow de métricas que pide escritura, hace `git push` o corre en cada PR        | 2026-10-22: `contents: write` o un paso `git push` en `.github/workflows/metrics.yml` da exit 1 (#121)                                                        |
 
 ## Comandos del CI que `pnpm verify` no corre
 
@@ -89,3 +90,24 @@ del semestre.
 | Cada integrante usa su propia identidad de Git                                    | Git acepta cualquier nombre y correo; solo la firma de commits lo comprobaría, y el equipo no firma | `git shortlog -sn` antes de cada corte                       |
 | El tamaño del PR                                                                  | D15: sin límite automático                                                                          | Quien revisa el PR                                           |
 | Docs, issues y PR en español; código y commits en inglés                          | D9. El idioma de un texto es juicio, no sintaxis                                                    | Quien revisa el PR                                           |
+
+## Métricas del proceso
+
+`.github/workflows/metrics.yml` calcula cada lunes, o a pedido, cuánto tarda un issue en llegar a
+`main` y cuántos PR se integran por semana. Lee el tracker con `gh api graphql` y nunca escribe en
+el repositorio. Las métricas no son un control: no rechazan nada y nunca hacen fallar un build. No
+tienen metas. La fila "Las métricas solo leen y no bloquean" de la tabla de arriba es el control
+del workflow, no de los números.
+
+- **Cómo se enlaza un PR con su issue.** Por las referencias de cierre del PR
+  (`closingIssuesReferences`): el `Closes #N` de la descripción o el enlace hecho a mano en GitHub.
+  Solo cuentan los issues de este repositorio y los PR integrados en `main`.
+- **Lead time.** Días desde que se abre el issue hasta el merge del primer PR que lo cierra. Un
+  issue cuenta una sola vez, en la semana de ese merge.
+- **PR sin issue.** Un PR con `[sin-issue]` o de Dependabot cuenta como PR integrado, pero no da
+  lead time.
+- **Mediana y p85.** Interpolan entre los dos valores más cercanos. La semana actual sale marcada
+  como `(in progress)`.
+
+Si una corrida falla, por ejemplo porque la API de GitHub no responde, queda en rojo en Actions.
+No bloquea ningún PR ni ningún merge.
