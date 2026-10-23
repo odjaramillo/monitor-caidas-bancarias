@@ -2,6 +2,12 @@
 // The reader knows only the shape that this repository uses:
 // two-space indentation, a top-level `jobs:` key and list items under `steps:`.
 
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+// The required status checks of `main`. Keep this list equal to the ruleset.
+export const REQUIRED_JOBS = ['checks', 'docker', 'secrets', 'issue'];
+
 const JOB = /^ {2}([A-Za-z0-9_-]+):\s*$/;
 const JOB_KEY = /^ {4}([A-Za-z0-9_-]+):\s*(.*)$/;
 const STEP_START = /^ {6}- (.*)$/;
@@ -130,4 +136,18 @@ export function isCheckStep(job, step) {
 /** Returns the ids of the jobs that have no check step. */
 export function noOpJobs(jobs) {
   return jobs.filter((job) => !job.steps.some((step) => isCheckStep(job, step))).map((j) => j.id);
+}
+
+/** Returns the jobs of every workflow file in a directory. Each job also has its `file`. */
+export function readWorkflows(dir) {
+  return readdirSync(dir)
+    .filter((file) => /\.ya?ml$/.test(file))
+    .flatMap((file) =>
+      parseJobs(readFileSync(join(dir, file), 'utf8')).map((job) => ({ file, ...job }))
+    );
+}
+
+/** Returns the job whose status-check context is `context`, or undefined. */
+export function jobByContext(jobs, context) {
+  return jobs.find((job) => contextOf(job) === context);
 }
