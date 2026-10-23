@@ -184,8 +184,8 @@ bajes para que pase: escribe la prueba que mata al mutante.
 
 En GitHub, `.github/workflows/mutation.yml` corre cada lunes, en un PR con la etiqueta `mutation`
 y a mano desde Actions. No es un check requerido. Deja el puntaje en el resumen del job y el
-reporte HTML como artefacto `mutation-report`. Para correrlo en tu PR, crea la etiqueta
-`mutation` una vez (Issues → Labels) y ponla en el PR.
+reporte HTML como artefacto `mutation-report`. Para correrlo en tu PR, ponle la etiqueta
+`mutation`.
 
 ## Cómo trabajamos
 

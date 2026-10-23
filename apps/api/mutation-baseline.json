@@ -1,14 +1,13 @@
 {
   "date": "2026-10-22",
-  "commit": "831a782",
+  "commit": "279a8fe",
   "runs": [
-    { "date": "2026-10-22", "commit": "831a782", "workers": 7, "score": 98.78 },
-    { "date": "2026-10-22", "commit": "831a782", "workers": 7, "score": 98.78 },
-    { "date": "2026-10-22", "commit": "831a782", "workers": 7, "score": 98.78 },
-    { "date": "2026-10-22", "commit": "831a782", "workers": 4, "score": 98.78 }
+    { "date": "2026-10-22", "commit": "279a8fe", "workers": 7, "score": 100 },
+    { "date": "2026-10-22", "commit": "279a8fe", "workers": 7, "score": 100 },
+    { "date": "2026-10-22", "commit": "279a8fe", "workers": 7, "score": 100 }
   ],
-  "score": 98.78,
+  "score": 100,
   "jitter": 0,
-  "threshold": 98.78,
-  "premise": "Four local runs on levels.ts and levels.test.ts as of commit 831a782: 81 of 82 mutants killed each time, so the jitter is 0 and the threshold equals the score. The tests of levels.ts read no clock, network or database, and a timeout counts as killed, so the score cannot move between runs. The survivor is createdMs > nowMs changed to >= in computeStatus. Measure again when levels.ts or its tests change, or when a CI run gives another score."
+  "threshold": 100,
+  "premise": "Three local runs on levels.ts and levels.test.ts as of commit 279a8fe: 82 of 82 mutants killed each time, so the jitter is 0 and the threshold equals the score. The tests of levels.ts read no clock, network or database, and a timeout counts as killed, so the score cannot move between runs. Commit 279a8fe adds the test that kills the last survivor (createdMs > nowMs changed to >= in computeStatus). Measure again when levels.ts or its tests change, or when a CI run gives another score."
 }

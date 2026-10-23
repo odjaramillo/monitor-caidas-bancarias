@@ -233,6 +233,15 @@ describe('computeStatus', () => {
     expect(status.pairs.every((pair) => pair.reports === 0)).toBe(true);
   });
 
+  it('counts a report dated exactly at the calculation', () => {
+    const status = computeStatus({
+      reports: reports('banesco', 'mercantil', 1, 0),
+      banks: BANKS,
+      now: NOW
+    });
+    expect(status.pairs[0]?.reports).toBe(1);
+  });
+
   it('ignores reports of banks that are not in the list', () => {
     const status = computeStatus({
       reports: reports('ghost', 'mercantil', 5),
