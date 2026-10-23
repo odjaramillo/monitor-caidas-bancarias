@@ -38,6 +38,40 @@ export default ts.config(
     }
   },
   {
+    // Every test runs, and no test waits a fixed time (issue #118).
+    // tooling/repo-contract/test-hygiene.test.js checks a skip, its issue and its expiry date.
+    files: [
+      '**/*.test.{ts,js}',
+      '**/*.e2e.ts',
+      'apps/web/e2e/**/*.ts',
+      'apps/api/src/testing/**/*.ts'
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[property.name='only']",
+          message: 'A focused test hides the other tests. Remove `.only`.'
+        },
+        {
+          selector: "MemberExpression[property.name='todo']",
+          message:
+            'A pending test leaves the count in silence. Write the test, or track it in an issue.'
+        },
+        ...[
+          "NewExpression[callee.name='Promise'] CallExpression[callee.name='setTimeout']",
+          "CallExpression[callee.property.name='waitForTimeout']",
+          'ImportDeclaration[source.value=/^(node:)?timers.promises$/]',
+          "CallExpression[callee.name='sleep']"
+        ].map((selector) => ({
+          selector,
+          message:
+            'A fixed wait makes the tests slow and flaky. Wait for a condition, or use fake timers.'
+        }))
+      ]
+    }
+  },
+  {
     files: ['**/*.svelte', '**/*.svelte.ts'],
     languageOptions: { parserOptions: { parser: ts.parser } }
   }

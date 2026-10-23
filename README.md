@@ -192,6 +192,13 @@ antes de empezar. Para usar otro puerto de la API, pon la misma `PUBLIC_API_URL`
    pruebas. Si cambiaste la API, necesita el PostgreSQL de `docker compose up -d`. La suite
    completa corre en el CI y en `pnpm verify`.
    <!-- regla: Lo cambiado compila y pasa sus pruebas -->
+10. **Cada prueba corre y no espera un tiempo fijo.** El lint rechaza `.only`, `.todo` y las
+    esperas fijas, como `setTimeout` o `waitForTimeout`. Un `.skip` lleva en la línea anterior
+    su issue y su vencimiento: `// skip: #123 until 2026-11-30`. Después de esa fecha,
+    `pnpm test` falla. Cada paquete del workspace tiene un script `test`.
+    <!-- regla: Ninguna prueba enfocada, pendiente o con espera -->
+    <!-- regla: Un `.skip` lleva su issue y su vencimiento -->
+    <!-- regla: Cada paquete del workspace tiene script `test` -->
 
 Idioma: docs, issues y PR en español; código, identificadores y commits en inglés (D9 en
 [decisiones](docs/decisiones.md)).
@@ -252,6 +259,8 @@ pasos de preparación o si `pnpm verify` se separa de `checks`. También falla s
 llamar al Deploy Hook, de comparar el `commit` de `/health` o de esperar a los jobs requeridos.
 Otra prueba del mismo paquete lee `docs/calidad.md`. Falla si una fila nombra un archivo, un script
 o un job que no existe, o si una regla de "Cómo trabajamos" no tiene su fila.
+Una tercera lee las pruebas y el workspace. Falla con un `.skip` sin su issue y su fecha, o
+vencido, y con un paquete sin script `test`.
 
 ### Cobertura y dependencias
 
