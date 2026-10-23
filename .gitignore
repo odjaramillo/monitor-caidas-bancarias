@@ -7,6 +7,9 @@ coverage
 apps/web/build
 .vercel
 
+# Playwright output: traces of failed browser tests
+apps/web/test-results
+
 # Secrets: only the example file is versioned
 .env
 .env.*

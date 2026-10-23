@@ -28,6 +28,7 @@ const GATES = [
   { job: 'checks', gate: 'typecheck', run: /^pnpm typecheck$/ },
   { job: 'checks', gate: 'test', run: /^pnpm test$/ },
   { job: 'checks', gate: 'build', run: /^pnpm build$/ },
+  { job: 'checks', gate: 'browser tests', run: /^pnpm --filter web test:e2e$/ },
   { job: 'docker', gate: 'compose.yaml validation', run: /^docker compose config -q$/ },
   { job: 'docker', gate: 'API image build', uses: /^docker\/build-push-action@/ },
   { job: 'docker', gate: 'boot refusal without DATABASE_URL', run: /DATABASE_URL is not set/ },
@@ -37,7 +38,11 @@ const GATES = [
 ];
 
 // CI commands that `pnpm verify` does not run. docs/calidad.md names each one and its reason.
-const LOCAL_EXCEPTIONS = [{ ci: /^pnpm exec commitlint /, docs: 'pnpm exec commitlint' }];
+const LOCAL_EXCEPTIONS = [
+  { ci: /^pnpm exec commitlint /, docs: 'pnpm exec commitlint' },
+  { ci: /^pnpm --filter web exec playwright install /, docs: 'playwright install --with-deps' },
+  { ci: /^pnpm --filter web test:e2e$/, docs: 'pnpm --filter web test:e2e' }
+];
 
 function verifyCommands() {
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
