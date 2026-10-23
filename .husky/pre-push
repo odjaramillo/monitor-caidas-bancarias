@@ -1,0 +1,38 @@
+# Runs the typecheck and the tests of the packages that the push changes (issue #112).
+# The job checks runs the same scripts on every package, so a skipped hook still fails in CI.
+# Husky runs this file with `sh -e`, so the first failure stops the push.
+
+# Git writes one line per pushed ref: <local ref> <local sha> <remote ref> <remote sha>.
+# The base is the remote commit when it exists here. Otherwise it is the fork point from origin/main.
+zero=0000000000000000000000000000000000000000
+base=""
+while read -r _ local_sha _ remote_sha; do
+  # A deleted branch pushes no code.
+  [ "$local_sha" = "$zero" ] && continue
+  if [ "$remote_sha" != "$zero" ] && git cat-file -e "$remote_sha^{commit}" 2>/dev/null; then
+    base=$remote_sha
+  else
+    base=$(git merge-base "$local_sha" origin/main)
+  fi
+  break
+done
+[ -z "$base" ] && exit 0
+
+# The API tests need the PostgreSQL of compose.yaml. Stop with a hint when it does not answer.
+changed=$(pnpm --filter "...[$base]" ls --depth -1 --parseable)
+if printf '%s\n' "$changed" | grep -q '/apps/api$'; then
+  if ! node -e "
+    const url = new URL(process.env.DATABASE_URL ?? 'postgresql://localhost:5432');
+    const socket = require('node:net').connect(Number(url.port || 5432), url.hostname);
+    socket.setTimeout(2000, () => process.exit(1));
+    socket.on('connect', () => process.exit(0));
+    socket.on('error', () => process.exit(1));
+  "; then
+    echo 'pre-push: the API tests need PostgreSQL, and it does not answer at DATABASE_URL or localhost:5432.' >&2
+    echo 'pre-push: start it with `docker compose up -d` (see README).' >&2
+    exit 1
+  fi
+fi
+
+pnpm --filter "...[$base]" typecheck
+pnpm --filter "...[$base]" test

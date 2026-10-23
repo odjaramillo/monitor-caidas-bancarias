@@ -6,13 +6,18 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { contextOf, isCheckStep, noOpJobs, parseJobs, readWorkflows } from './workflows.js';
+import {
+  REQUIRED_JOBS,
+  contextOf,
+  isCheckStep,
+  jobByContext,
+  noOpJobs,
+  parseJobs,
+  readWorkflows
+} from './workflows.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const workflowsDir = join(root, '.github/workflows');
-
-// The required status checks of `main`. Keep this list equal to the ruleset.
-const REQUIRED_JOBS = ['checks', 'docker', 'secrets', 'issue'];
 
 // Each gate names its job and the step that runs it.
 const GATES = [
@@ -33,10 +38,6 @@ const GATES = [
 
 // CI commands that `pnpm verify` does not run. docs/calidad.md names each one and its reason.
 const LOCAL_EXCEPTIONS = [{ ci: /^pnpm exec commitlint /, docs: 'pnpm exec commitlint' }];
-
-function jobByContext(jobs, context) {
-  return jobs.find((job) => contextOf(job) === context);
-}
 
 function verifyCommands() {
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));

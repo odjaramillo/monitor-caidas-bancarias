@@ -26,6 +26,7 @@ const CONTROLLED_RULES = [
   'Un PR por issue con `Closes #N` o `[sin-issue]`',
   '`main` solo recibe PR con el CI en verde',
   'Estilo y formato del código',
+  'Lo cambiado compila y pasa sus pruebas',
   'Funciones de complejidad 10 como máximo',
   '`levels.ts` no importa infraestructura',
   'Las dependencias coinciden con el lockfile',
@@ -40,6 +41,7 @@ const CONTROLLED_RULES = [
   'Sin vulnerabilidades altas en producción',
   '`pnpm verify` repite el job `checks`',
   'Los jobs requeridos existen y revisan algo',
+  'Los hooks no pierden pasos y el CI los repite',
   'La tabla nombra controles que existen'
 ];
 
