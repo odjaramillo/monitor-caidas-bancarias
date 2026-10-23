@@ -53,7 +53,8 @@ const CONTROLLED_RULES = [
   'Un `.skip` lleva su issue y su vencimiento',
   'Cada paquete del workspace tiene script `test`',
   'Topes de parámetros, anidamiento y largo',
-  'Las excepciones a los topes solo bajan'
+  'Las excepciones a los topes solo bajan',
+  'El piso de cobertura sube con la cobertura'
 ];
 
 function read(path) {

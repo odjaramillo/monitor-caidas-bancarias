@@ -13,16 +13,17 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       // Test helpers are not shipped in the image (tsconfig.build.json), so they do not count.
       exclude: ['src/testing/**'],
-      reporter: ['text-summary'],
-      // Floor = coverage measured on 2026-10-22 with POST /reports merged on main (issue #5, decision D16).
+      reporter: ['text-summary', 'json-summary'],
+      // Floor = coverage measured on 2026-10-22 at commit 831a782, main CI run 39883754785 (decision D16).
       // server.ts is the entry point and has no unit test; the docker job boots it instead.
       // seed-demo.ts only wires demo-seed.ts to the terminal, so it has no unit test either.
-      // Raise these numbers when coverage rises. Never lower them to make CI green.
+      // CI fails when coverage rises above these numbers, so run pnpm coverage:ratchet (issue #120).
+      // Never lower them to make CI green.
       thresholds: {
-        statements: 89.9,
-        branches: 92,
+        statements: 89.95,
+        branches: 92.3,
         functions: 98.18,
-        lines: 89.52
+        lines: 89.58
       }
     }
   }

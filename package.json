@@ -14,8 +14,10 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "audit:prod": "node tooling/repo-contract/audit-gate.js",
+    "coverage:check": "node tooling/repo-contract/coverage-ratchet.js",
+    "coverage:ratchet": "pnpm test && node tooling/repo-contract/coverage-ratchet.js --write",
     "measure:functions": "node tooling/repo-contract/function-shape.js",
-    "verify": "pnpm install --frozen-lockfile && pnpm audit:prod && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "verify": "pnpm install --frozen-lockfile && pnpm audit:prod && pnpm lint && pnpm typecheck && pnpm test && pnpm coverage:check && pnpm build",
     "prepare": "husky"
   },
   "lint-staged": {
