@@ -186,8 +186,11 @@ antes de empezar. Para usar otro puerto de la API, pon la misma `PUBLIC_API_URL`
    `docker compose up -d`.
    <!-- regla: `pnpm verify` repite el job `checks` -->
 9. **Antes de cada push, un hook corre el typecheck y las pruebas de lo cambiado.** Solo revisa
-   los paquetes que cambió el push y se detiene en el primer fallo. Si cambiaste la API, necesita
-   el PostgreSQL de `docker compose up -d`. La suite completa corre en el CI y en `pnpm verify`.
+   los paquetes que cambió el push y los que dependen de ellos, nunca el paquete raíz, y se
+   detiene en el primer fallo. Un push que solo cambia archivos de la raíz no corre ningún
+   paquete, y un paquete sin script `typecheck`, como `tooling/repo-contract`, solo corre sus
+   pruebas. Si cambiaste la API, necesita el PostgreSQL de `docker compose up -d`. La suite
+   completa corre en el CI y en `pnpm verify`.
    <!-- regla: Lo cambiado compila y pasa sus pruebas -->
 
 Idioma: docs, issues y PR en español; código, identificadores y commits en inglés (D9 en
