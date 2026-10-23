@@ -1,0 +1,60 @@
+name: Mutation
+
+# Mutation testing of apps/api/src/levels.ts with Stryker (issue #119).
+# It is not a required check and does not block a merge. It runs every Monday, on a PR with the
+# label `mutation`, and by hand from the Actions tab.
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Monday 09:00 UTC, 05:00 in Venezuela
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutation:
+    # A PR without the label skips the job. A skipped job is not a failure, and nothing requires it.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'mutation')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # pnpm/action-setup reads the pnpm version from packageManager.
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Stryker exits 1 when the score is under the break threshold of apps/api/mutation-baseline.json.
+      # shell: bash adds pipefail, so tee does not hide that exit code.
+      - name: Stryker mutates levels.ts and fails under the break threshold
+        shell: bash
+        run: pnpm --filter api test:mutation 2>&1 | tee "$RUNNER_TEMP/mutation.log"
+      - name: Write the mutation score to the job summary
+        if: always()
+        run: |
+          {
+            echo "## Mutation score of \`apps/api/src/levels.ts\`"
+            echo
+            echo "Break threshold: $(jq -r .threshold apps/api/mutation-baseline.json), from \`apps/api/mutation-baseline.json\`."
+            echo
+            echo '```text'
+            grep -E '^(-+\|| +\| % Mutation|File +\||All files +\|| [^ ]+\.ts +\|)' "$RUNNER_TEMP/mutation.log" \
+              || echo 'Stryker printed no score table. Read the log of the Stryker step.'
+            grep -o 'Final mutation score .*' "$RUNNER_TEMP/mutation.log" || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload the HTML report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutation-report
+          path: apps/api/reports/mutation/
+          if-no-files-found: error

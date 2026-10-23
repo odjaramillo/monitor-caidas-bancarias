@@ -159,6 +159,31 @@ Las pruebas arrancan la API en `:3000` y el frontend en `:4173`. Si un puerto es
 antes de empezar. Para usar otro puerto de la API, pon la misma `PUBLIC_API_URL` en los dos
 últimos comandos, por ejemplo `PUBLIC_API_URL=http://localhost:3100`.
 
+### Pruebas de mutación
+
+La cobertura dice qué líneas corren las pruebas, no si detectan un cambio en ellas. Stryker cambia
+`apps/api/src/levels.ts` un mutante a la vez, por ejemplo `>=` por `>`, y corre sus pruebas. Si
+ninguna falla, el mutante sobrevive: esa línea corre, pero nadie comprueba su resultado (#119).
+
+```sh
+pnpm --filter api test:mutation
+```
+
+No necesita PostgreSQL: usa `apps/api/vitest.stryker.config.ts`, que corre solo
+`levels.test.ts` y no migra la base. Tarda menos de un minuto. La tabla final da el puntaje, y
+`apps/api/reports/mutation/mutation.html` muestra cada mutante. Ábrelo en el navegador y filtra por
+`Survived`: cada mutante vivo pide una prueba nueva.
+
+El comando falla si el puntaje baja del umbral `threshold` de `apps/api/mutation-baseline.json`.
+Ese archivo guarda cada medición con su fecha y su commit. El umbral es el puntaje medido menos
+su variación entre corridas. Si tu PR sube el puntaje, mide tres veces y sube el umbral. Nunca lo
+bajes para que pase: escribe la prueba que mata al mutante.
+
+En GitHub, `.github/workflows/mutation.yml` corre cada lunes, en un PR con la etiqueta `mutation`
+y a mano desde Actions. No es un check requerido. Deja el puntaje en el resumen del job y el
+reporte HTML como artefacto `mutation-report`. Para correrlo en tu PR, crea la etiqueta
+`mutation` una vez (Issues → Labels) y ponla en el PR.
+
 ## Cómo trabajamos
 
 1. **Todo empieza en un issue.** Usa la plantilla Tarea o Bug. Cada issue cita su requisito (`E#` o
@@ -268,6 +293,8 @@ Otra prueba del mismo paquete lee `docs/calidad.md`. Falla si una fila nombra un
 o un job que no existe, o si una regla de "Cómo trabajamos" no tiene su fila.
 Una tercera lee las pruebas y el workspace. Falla con un `.skip` sin su issue y su fecha, o
 vencido, y con un paquete sin script `test`.
+Una cuarta fija el gate de mutación: falla si el umbral no sale de la medición fechada, si Stryker
+muta otro archivo o si `mutation` pasa a ser un job requerido.
 
 ### Cobertura y dependencias
 

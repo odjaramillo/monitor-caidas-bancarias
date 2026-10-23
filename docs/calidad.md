@@ -10,6 +10,9 @@ que el control falla: un control que nunca falla no prueba nada.
   repite en un job requerido del CI, y una prueba lo comprueba. `CI` es un job que `main` exige
   para fusionar. `GitHub` es la protección de la rama `main`. `CI después del merge` corre en
   cada push a `main`: no bloquea el merge, pero queda en rojo en Actions si falla.
+  `semanal` corre fuera del camino del merge: cada lunes, en un PR con la etiqueta `mutation` y a
+  mano desde Actions. El estándar de QA lo llama prose-only (advisory): avisa en rojo, pero no
+  bloquea nada.
 - **Prueba de que falla.** La corrida que vio el control en rojo. Las del 2026-10-20 se hicieron
   en la auditoría de QA y en los PR de cada gate.
 - **Si agregas una regla o un control, agrega su fila en el mismo PR.** La prueba del índice fija
@@ -58,6 +61,7 @@ en la de convenciones.
 | Un `.skip` lleva su issue y su vencimiento      | Escaneo de `tooling/repo-contract/test-hygiene.js`: `// skip: #N until AAAA-MM-DD` en la línea anterior               | CI (`checks`: `pnpm test`)                      | Un `.skip` sin issue ni fecha, o vencido, que saca una prueba del conteo sin aviso    | 2026-10-22: un `.skip` sin marca, o con fecha pasada, en `levels.test.ts` da exit 1 en las pruebas de `tooling/repo-contract` (#118)                          |
 | Cada paquete del workspace tiene script `test`  | Prueba en `tooling/repo-contract/test-hygiene.test.js` sobre `pnpm-workspace.yaml` y cada `package.json`              | CI (`checks`: `pnpm test`)                      | Un paquete sin pruebas que `pnpm -r test` salta sin aviso                             | 2026-10-22: quitar el script `test` de `apps/web/package.json` da exit 1 (#118). Sin el de `tooling/repo-contract`, esta prueba no corre                      |
 | Dependabot propone actualizaciones cada mes     | `.github/dependabot.yml` (mensual, un grupo por ecosistema), fijado por `tooling/repo-contract/dependabot.test.js`    | CI (`checks`: `pnpm test`)                      | Un `dependabot.yml` borrado, semanal o sin grupo, que deja de abrir un PR al mes      | 2026-10-22: `interval: weekly` o un grupo sin `*` da exit 1; el archivo pasa el esquema de SchemaStore (#46)                                                  |
+| Las pruebas de `levels.ts` detectan mutantes    | Stryker sobre `apps/api/src/levels.ts`, umbral `break` de `apps/api/mutation-baseline.json`                           | `mutation`, semanal: prose-only (advisory)      | Una línea que las pruebas ejecutan pero no comprueban; el puntaje baja del medido     | 2026-10-22: `break` en 99, sobre el puntaje medido de 98,78, da exit 1 (#119). Primera corrida en GitHub: pendiente                                           |
 
 ## Comandos del CI que `pnpm verify` no corre
 
@@ -71,8 +75,8 @@ salvo en estos comandos:
 | `pnpm --filter web exec playwright install --with-deps chromium` | Instala Chromium y paquetes del sistema con permisos de administrador. En local se instala una vez: `pnpm --filter web exec playwright install chromium`           |
 | `pnpm --filter web test:e2e`                                     | Deja reportes reales en la base, y esos reportes hacen fallar las pruebas de la API durante 15 minutos. En local se corre aparte, con la base `mcb_e2e` del README |
 
-`pnpm verify` tampoco corre los jobs `docker`, `secrets`, `issue` y `deploy`, porque no son parte de
-`checks`. `issue` lee la descripción del PR, que solo existe en GitHub. `deploy` despliega producción
+`pnpm verify` tampoco corre los jobs `docker`, `secrets`, `issue`, `deploy` y `mutation`, porque no son
+parte de `checks`. `issue` lee la descripción del PR, que solo existe en GitHub. `deploy` despliega producción
 y solo corre en GitHub.
 
 ## Reglas sin control: convenciones aceptadas

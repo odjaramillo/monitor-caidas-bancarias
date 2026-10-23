@@ -5,7 +5,18 @@ import globals from 'globals';
 import ts from 'typescript-eslint';
 
 export default ts.config(
-  { ignores: ['**/dist', '**/build', '**/.svelte-kit', '**/coverage'] },
+  {
+    // Stryker writes its report to apps/api/reports.
+    // It leaves its sandbox in .stryker-tmp when a run stops early.
+    ignores: [
+      '**/dist',
+      '**/build',
+      '**/.svelte-kit',
+      '**/coverage',
+      '**/.stryker-tmp',
+      'apps/api/reports'
+    ]
+  },
   js.configs.recommended,
   ...ts.configs.recommended,
   ...svelte.configs.recommended,

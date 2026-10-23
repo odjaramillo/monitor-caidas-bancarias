@@ -10,6 +10,10 @@ apps/web/build
 # Playwright output: traces of failed browser tests
 apps/web/test-results
 
+# Stryker output: sandbox copies and the mutation report (issue #119)
+apps/api/.stryker-tmp
+apps/api/reports
+
 # Secrets: only the example file is versioned
 .env
 .env.*

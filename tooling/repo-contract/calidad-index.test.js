@@ -51,7 +51,8 @@ const CONTROLLED_RULES = [
   'La tabla nombra controles que existen',
   'Ninguna prueba enfocada, pendiente o con espera',
   'Un `.skip` lleva su issue y su vencimiento',
-  'Cada paquete del workspace tiene script `test`'
+  'Cada paquete del workspace tiene script `test`',
+  'Las pruebas de `levels.ts` detectan mutantes'
 ];
 
 function read(path) {

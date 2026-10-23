@@ -74,6 +74,12 @@ const GATES = [
     job: 'deploy',
     gate: '/health with the deployed commit',
     run: /curl -sS --max-time .+ "\$HEALTH_URL"[\s\S]+\.commit[\s\S]+\[ "\$code" = 200 \] && \[ "\$commit" = "\$EXPECTED_COMMIT" \]/
+  },
+  // mutation is not a required check: it runs every week and on a labelled PR (#119).
+  {
+    job: 'mutation',
+    gate: 'Stryker with the break threshold',
+    run: /^pnpm --filter api test:mutation 2>&1 \| tee "\$RUNNER_TEMP\/mutation\.log"$/
   }
 ];
 
