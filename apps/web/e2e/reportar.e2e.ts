@@ -35,6 +35,8 @@ test('a report sent from /reportar appears on the status screen', async ({ page 
   // The window of 15 minutes can drop older reports at any moment, so the total is not fixed.
   // So the test waits for a count that started after the report was saved: it holds the report.
   // The worker counts again every second. Each attempt reloads the screen to ask for the status.
+  // In CI the database is new, and no other test reports on Bancamiga → Banco Plaza. So there
+  // a count of at least 1 comes from this report. A local rerun can find older reports there.
   await expect(async () => {
     const status = await openStatusScreen(page);
     expect(Date.parse(status.updatedAt)).toBeGreaterThanOrEqual(savedAt);
