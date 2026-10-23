@@ -52,7 +52,10 @@ const CONTROLLED_RULES = [
   'La tabla nombra controles que existen',
   'Ninguna prueba enfocada, pendiente o con espera',
   'Un `.skip` lleva su issue y su vencimiento',
-  'Cada paquete del workspace tiene script `test`'
+  'Cada paquete del workspace tiene script `test`',
+  'Topes de parámetros, anidamiento y largo',
+  'Las excepciones a los topes solo bajan',
+  'El piso de cobertura sube con la cobertura'
 ];
 
 function read(path) {

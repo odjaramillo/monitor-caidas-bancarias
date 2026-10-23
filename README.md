@@ -124,15 +124,18 @@ docker compose exec redis redis-cli
 
 ## Scripts
 
-| Comando          | Qué hace                                                                                 |
-| ---------------- | ---------------------------------------------------------------------------------------- |
-| `pnpm dev`       | Corre la API y el frontend y recarga al guardar                                          |
-| `pnpm lint`      | ESLint y la revisión de formato de Prettier                                              |
-| `pnpm format`    | Formatea todos los archivos con Prettier                                                 |
-| `pnpm typecheck` | `tsc` para la API, `svelte-check` para el frontend                                       |
-| `pnpm test`      | Vitest, con cobertura y su piso. La API necesita el PostgreSQL de `docker compose up -d` |
-| `pnpm build`     | Compila la API y genera el frontend estático                                             |
-| `pnpm verify`    | Corre los comandos del job `checks` del CI en el mismo orden                             |
+| Comando                  | Qué hace                                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `pnpm dev`               | Corre la API y el frontend y recarga al guardar                                                    |
+| `pnpm lint`              | ESLint y la revisión de formato de Prettier                                                        |
+| `pnpm format`            | Formatea todos los archivos con Prettier                                                           |
+| `pnpm typecheck`         | `tsc` para la API, `svelte-check` para el frontend                                                 |
+| `pnpm test`              | Vitest, con cobertura y su piso. La API necesita el PostgreSQL de `docker compose up -d`           |
+| `pnpm build`             | Compila la API y genera el frontend estático                                                       |
+| `pnpm verify`            | Corre los comandos del job `checks` del CI en el mismo orden                                       |
+| `pnpm coverage:check`    | Falla si la cobertura subió más de 0,1 puntos sobre su piso. Lee el resumen del último `pnpm test` |
+| `pnpm coverage:ratchet`  | Corre `pnpm test` y sube el piso de cobertura a lo medido, con la fecha de hoy                     |
+| `pnpm measure:functions` | Mide parámetros, niveles de bloques y líneas de cada función de producción (JSON)                  |
 
 Para construir y correr la imagen de la API desde la raíz del repositorio:
 
@@ -226,7 +229,8 @@ El pipeline empieza con un PR hacia `main` y termina con la prueba de la API des
 
 1. **Checks del PR.** `.github/workflows/ci.yml` corre en cada PR y en cada push a `main`:
    - `checks`: instala con el lockfile, revisa los mensajes de commit, lint, typecheck, pruebas,
-     build y las pruebas en navegador con Playwright contra el build y la API con su PostgreSQL.
+     el piso de cobertura, build y las pruebas en navegador con Playwright contra el build y la
+     API con su PostgreSQL.
    - `docker`: valida `compose.yaml`, construye la imagen de la API, comprueba que no arranca sin
      `DATABASE_URL`, la arranca con PostgreSQL y exige que `/health` responda
      `{"status":"ok","database":"ok"}` en 30 s.
@@ -272,10 +276,16 @@ vencido, y con un paquete sin script `test`.
 ### Cobertura y dependencias
 
 - `pnpm test` mide la cobertura de cada proyecto y falla si baja del piso. El piso está en
-  `thresholds`, en `apps/api/vitest.config.ts` y en `apps/web/vite.config.ts`, con la fecha y el
-  commit de la medición.
-- Cuando tu PR sube la cobertura, sube también el piso a los números nuevos que imprime
-  `pnpm test`. Nunca lo bajes para que el CI pase: escribe la prueba que falta.
+  `thresholds`, en `apps/api/vitest.config.ts` y en `apps/web/vite.config.ts`, con la fecha de la
+  medición.
+- El piso sube cuando sube la cobertura (#120). Después de `pnpm test`, `checks` corre
+  `pnpm coverage:check`: falla si una métrica quedó más de 0,1 puntos sobre su piso. Entonces
+  corre `pnpm coverage:ratchet` y haz commit de los configs. El script escribe los números nuevos y
+  la fecha de hoy junto al piso, y nunca lo baja. Ningún workflow hace commits a `main`: el piso
+  nuevo llega en tu PR. Nunca bajes el piso para que el CI pase: escribe la prueba que falta.
+- ESLint limita cada función de producción a 4 parámetros, 3 niveles de bloques y 31 líneas, justo
+  sobre el p95 medido. La medición y las funciones viejas sobre el tope están en
+  [calidad](docs/calidad.md).
 - `checks` también corre `pnpm audit:prod`. El script `tooling/repo-contract/audit-gate.js` corre
   `pnpm audit --prod --json` y falla si una dependencia de producción tiene un aviso alto o
   crítico que no está en `audit-allowlist.json`. También falla si el registro no responde o si la

@@ -28,6 +28,7 @@ const GATES = [
   { job: 'checks', gate: 'lint', run: /^pnpm lint$/ },
   { job: 'checks', gate: 'typecheck', run: /^pnpm typecheck$/ },
   { job: 'checks', gate: 'test', run: /^pnpm test$/ },
+  { job: 'checks', gate: 'coverage ratchet', run: /^pnpm coverage:check$/ },
   { job: 'checks', gate: 'build', run: /^pnpm build$/ },
   { job: 'checks', gate: 'browser tests', run: /^pnpm --filter web test:e2e$/ },
   { job: 'docker', gate: 'compose.yaml validation', run: /^docker compose config -q$/ },
@@ -140,6 +141,18 @@ describe('CI contract', () => {
 
   it('runs the audit gate script in pnpm audit:prod', () => {
     expect(rootScripts()['audit:prod']).toBe('node tooling/repo-contract/audit-gate.js');
+  });
+
+  it('runs the ratchet script in pnpm coverage:check and pnpm coverage:ratchet', () => {
+    expect(rootScripts()['coverage:check']).toBe('node tooling/repo-contract/coverage-ratchet.js');
+    expect(rootScripts()['coverage:ratchet']).toBe(
+      'pnpm test && node tooling/repo-contract/coverage-ratchet.js --write'
+    );
+  });
+
+  it('checks the coverage floors right after the tests that write the coverage', () => {
+    const runs = jobByContext(jobs, 'checks').steps.map((step) => step.run);
+    expect(runs[runs.indexOf('pnpm test') + 1]).toBe('pnpm coverage:check');
   });
 
   it('has no job with only setup steps', () => {
