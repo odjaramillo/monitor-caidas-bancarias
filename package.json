@@ -12,7 +12,7 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
+    "test": "pnpm --dir tooling/repo-contract run test && pnpm -r --filter '!repo-contract' --filter '!monitor-caidas-bancarias' test",
     "audit:prod": "node tooling/repo-contract/audit-gate.js",
     "coverage:check": "node tooling/repo-contract/coverage-ratchet.js",
     "coverage:ratchet": "pnpm test && node tooling/repo-contract/coverage-ratchet.js --write",

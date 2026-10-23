@@ -292,11 +292,15 @@ este repositorio, solo un estado del commit, y el sitio estático no dice qué c
 Una prueba en `tooling/repo-contract` lee los workflows como texto. Falla si un job requerido
 desaparece o cambia de nombre, si un comando de gate deja de correr, si un job queda solo con
 pasos de preparación o si `pnpm verify` se separa de `checks`. También falla si `deploy` deja de
-llamar al Deploy Hook, de comparar el `commit` de `/health` o de esperar a los jobs requeridos.
+llamar al Deploy Hook, de comparar el `commit` de `/health` o de esperar a los jobs requeridos, y
+si cambia el `concurrency` del CI (un push nuevo cancela la corrida vieja de la misma rama) o el de
+`deploy` (un despliegue a la vez, y el nuevo cancela al viejo).
 Otra prueba del mismo paquete lee `docs/calidad.md`. Falla si una fila nombra un archivo, un script
 o un job que no existe, o si una regla de "Cómo trabajamos" no tiene su fila.
 Una tercera lee las pruebas y el workspace. Falla con un `.skip` sin su issue y su fecha, o
-vencido, y con un paquete sin script `test`.
+vencido, y con un paquete sin script `test`. Para que estas pruebas no dejen de correr en silencio,
+`pnpm test` corre `tooling/repo-contract` con `pnpm --dir`, que falla si el paquete pierde su
+script `test`, y después corre los demás paquetes.
 Una cuarta fija el gate de mutación: falla si el umbral no sale de la medición fechada, si Stryker
 muta otro archivo o si `mutation` pasa a ser un job requerido.
 

@@ -14,7 +14,8 @@ import {
   jobByContext,
   noOpJobs,
   parseJobs,
-  readWorkflows
+  readWorkflows,
+  topLevelMap
 } from './workflows.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -139,10 +140,36 @@ describe('CI contract', () => {
     expect(deploy.if).toBe("github.event_name == 'push' && github.ref == 'refs/heads/main'");
   });
 
+  // A newer push to the same ref replaces the older run, so two runs of one ref never overlap.
+  it('cancels the older CI run of the same ref', () => {
+    const text = readFileSync(join(workflowsDir, 'ci.yml'), 'utf8');
+    expect(topLevelMap(text, 'concurrency')).toEqual({
+      group: 'ci-${{ github.ref }}',
+      'cancel-in-progress': 'true'
+    });
+  });
+
+  // Render gets one Deploy Hook call at a time, and a newer deploy replaces the older one.
+  it('runs one deploy at a time and lets the newer deploy cancel the older one', () => {
+    expect(jobByContext(jobs, 'deploy').concurrency).toEqual({
+      group: 'deploy-render',
+      'cancel-in-progress': 'true'
+    });
+  });
+
   it('pins every Action to a full commit SHA with its tag in a comment', () => {
     const values = usesValues();
     expect(values.length, 'uses: lines').toBeGreaterThan(0);
     expect(values.filter(({ uses }) => !PINNED_USES.test(uses))).toEqual([]);
+  });
+
+  // `pnpm -r test` and `pnpm --filter` skip a package without a `test` script (pnpm 11).
+  // That would hide this whole suite. `pnpm --dir <package> run test` fails on a missing script.
+  // The second command excludes repo-contract, so its suite runs once, and the root, so it does not loop.
+  it('runs the repo-contract tests through --dir and every other package once', () => {
+    expect(rootScripts().test).toBe(
+      "pnpm --dir tooling/repo-contract run test && pnpm -r --filter '!repo-contract' --filter '!monitor-caidas-bancarias' test"
+    );
   });
 
   it('runs the audit gate script in pnpm audit:prod', () => {
