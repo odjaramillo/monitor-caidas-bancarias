@@ -141,6 +141,23 @@ docker run --rm --network host -e DATABASE_URL=postgresql://mcb:mcb@localhost:54
 curl localhost:3000/health   # {"status":"ok","database":"ok"}
 ```
 
+### Pruebas en navegador
+
+Playwright abre las dos pantallas en Chromium, contra el build estático y la API compilada (#111).
+Las pruebas escriben reportes, así que solo aceptan un PostgreSQL en `localhost`. Usa una base
+aparte: con esos reportes, las pruebas de la API fallan durante 15 minutos.
+
+```sh
+pnpm --filter web exec playwright install chromium   # una vez; en Linux agrega --with-deps
+docker compose exec postgres createdb -U mcb mcb_e2e  # una vez
+pnpm build
+DATABASE_URL=postgresql://mcb:mcb@localhost:5432/mcb_e2e pnpm --filter web test:e2e
+```
+
+Las pruebas arrancan la API en `:3000` y el frontend en `:4173`. Si un puerto está ocupado, fallan
+antes de empezar. Para usar otro puerto de la API, pon la misma `PUBLIC_API_URL` en los dos
+últimos comandos, por ejemplo `PUBLIC_API_URL=http://localhost:3100`.
+
 ## Cómo trabajamos
 
 1. **Todo empieza en un issue.** Usa la plantilla Tarea o Bug. Cada issue cita su requisito (`E#` o
@@ -176,7 +193,8 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 
 `.github/workflows/ci.yml` corre en cada PR y en cada push a `main`:
 
-1. `checks`: instala con el lockfile, revisa los mensajes de commit, lint, typecheck, pruebas y build.
+1. `checks`: instala con el lockfile, revisa los mensajes de commit, lint, typecheck, pruebas, build
+   y las pruebas en navegador con Playwright contra el build y la API con su PostgreSQL.
 2. `docker`: valida `compose.yaml`, construye la imagen de la API, comprueba que no arranca sin
    `DATABASE_URL`, la arranca con PostgreSQL y exige que `/health` responda
    `{"status":"ok","database":"ok"}` en 30 s.
