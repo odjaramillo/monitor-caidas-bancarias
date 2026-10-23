@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    // A focused test in CI would hide the others (issue #118). This is also the Vitest default.
+    allowOnly: !process.env.CI,
     // Applies the migrations to the test database once, before any test file runs (issue #20).
     globalSetup: ['src/testing/global-setup.ts'],
     coverage: {

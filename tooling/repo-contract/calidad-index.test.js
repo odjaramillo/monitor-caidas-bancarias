@@ -2,7 +2,7 @@
 // A row that names a renamed or deleted control still claims a gate that does not exist.
 // A README rule without a row has no control and no accepted convention.
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -16,6 +16,7 @@ import {
   sectionLines
 } from './calidad.js';
 import { contextOf, readWorkflows } from './workflows.js';
+import { workspacePackageDirs } from './workspace.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -45,27 +46,23 @@ const CONTROLLED_RULES = [
   '`pnpm verify` repite el job `checks`',
   'Los jobs requeridos existen y revisan algo',
   'Los hooks no pierden pasos y el CI los repite',
-  'La tabla nombra controles que existen'
+  'La tabla nombra controles que existen',
+  'Ninguna prueba enfocada, pendiente o con espera',
+  'Un `.skip` lleva su issue y su vencimiento',
+  'Cada paquete del workspace tiene script `test`'
 ];
 
 function read(path) {
   return readFileSync(join(root, path), 'utf8');
 }
 
-// Reads the scripts of the root package.json and of each `<dir>/*` package of the workspace.
+// Reads the scripts of the root package.json and of each package of the workspace.
 function workspaceScripts() {
-  const dirs = [...read('pnpm-workspace.yaml').matchAll(/^\s+- (\S+)\/\*$/gm)].map((m) => m[1]);
-  const packages = dirs.flatMap((dir) =>
-    readdirNames(join(root, dir)).map((name) => join(dir, name, 'package.json'))
+  const packages = workspacePackageDirs(root).map((dir) => join(dir, 'package.json'));
+  const scripts = ['package.json', ...packages].flatMap((path) =>
+    Object.keys(JSON.parse(read(path)).scripts ?? {})
   );
-  const scripts = ['package.json', ...packages]
-    .filter((path) => existsSync(join(root, path)))
-    .flatMap((path) => Object.keys(JSON.parse(read(path)).scripts ?? {}));
   return new Set(scripts);
-}
-
-function readdirNames(dir) {
-  return existsSync(dir) ? readdirSync(dir) : [];
 }
 
 function readRepo() {
