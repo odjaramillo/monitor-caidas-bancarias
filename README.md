@@ -172,7 +172,8 @@ antes de empezar. Para usar otro puerto de la API, pon la misma `PUBLIC_API_URL`
    <!-- regla: Commits con Conventional Commits -->
    <!-- regla: Estilo y formato del código -->
 4. **Un PR por issue, con `Closes #N` en inglés.** "Cierra #N" no cierra el issue. Un PR sin issue
-   lleva `[sin-issue]`. El CI rechaza el PR si no tiene ninguno de los dos.
+   lleva `[sin-issue]`. El CI rechaza el PR si no tiene ninguno de los dos. Solo el PR mensual de
+   Dependabot pasa sin enlace.
    <!-- regla: Un PR por issue con `Closes #N` o `[sin-issue]` -->
 5. **`main` está protegida.** Solo entra por PR, con el CI en verde.
    <!-- regla: `main` solo recibe PR con el CI en verde -->
@@ -192,6 +193,13 @@ antes de empezar. Para usar otro puerto de la API, pon la misma `PUBLIC_API_URL`
    pruebas. Si cambiaste la API, necesita el PostgreSQL de `docker compose up -d`. La suite
    completa corre en el CI y en `pnpm verify`.
    <!-- regla: Lo cambiado compila y pasa sus pruebas -->
+10. **Cada prueba corre y no espera un tiempo fijo.** El lint rechaza `.only`, `.todo` y las
+    esperas fijas, como `setTimeout` o `waitForTimeout`. Un `.skip` lleva en la línea anterior
+    su issue y su vencimiento: `// skip: #123 until 2026-11-30`. Después de esa fecha,
+    `pnpm test` falla. Cada paquete del workspace tiene un script `test`.
+    <!-- regla: Ninguna prueba enfocada, pendiente o con espera -->
+    <!-- regla: Un `.skip` lleva su issue y su vencimiento -->
+    <!-- regla: Cada paquete del workspace tiene script `test` -->
 
 Idioma: docs, issues y PR en español; código, identificadores y commits en inglés (D9 en
 [decisiones](docs/decisiones.md)).
@@ -228,7 +236,9 @@ El pipeline empieza con un PR hacia `main` y termina con la prueba de la API des
      propio de un commit de merge, porque `git log -p` no lo muestra.
 
    `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
-   - `issue`: exige `Closes #N` o `[sin-issue]`.
+   - `issue`: exige `Closes #N` o `[sin-issue]`. Si el autor del PR es `dependabot[bot]`, pasa
+     sin enlace y lo dice en un aviso. Corre igual en cada PR, porque un check requerido que se
+     salta cuenta como aprobado.
 
    Vercel publica además una vista previa del frontend para cada PR.
 
@@ -256,6 +266,8 @@ pasos de preparación o si `pnpm verify` se separa de `checks`. También falla s
 llamar al Deploy Hook, de comparar el `commit` de `/health` o de esperar a los jobs requeridos.
 Otra prueba del mismo paquete lee `docs/calidad.md`. Falla si una fila nombra un archivo, un script
 o un job que no existe, o si una regla de "Cómo trabajamos" no tiene su fila.
+Una tercera lee las pruebas y el workspace. Falla con un `.skip` sin su issue y su fecha, o
+vencido, y con un paquete sin script `test`.
 
 ### Cobertura y dependencias
 
@@ -271,6 +283,15 @@ o un job que no existe, o si una regla de "Cómo trabajamos" no tiene su fila.
 - Cada `uses:` de los workflows está fijado al SHA completo de un commit, con el tag en un
   comentario. Un tag se puede mover a otro código; un SHA no. Para subir una Action, busca el SHA
   del tag nuevo con `gh api repos/<dueño>/<action>/commits/<tag> --jq .sha` y cambia los dos.
+- Dependabot abre un PR agrupado por ecosistema el primer día de cada mes: uno para npm (todo el
+  workspace de pnpm) y otro para las Actions de `.github/workflows`. Sus commits empiezan con
+  `chore(deps):` o `ci(deps):` y pasan commitlint. `.github/dependabot.yml` tiene la
+  configuración, y una prueba de `tooling/repo-contract` la fija.
+- Para revisar el PR de Dependabot, lee las notas de versión de cada cambio mayor y espera a que
+  pasen `checks`, `docker`, `secrets` e `issue`. Si un cambio rompe algo, cierra el PR, abre un
+  issue y actualiza esa dependencia a mano en su propio PR. Los jobs de un PR solo usan el
+  `GITHUB_TOKEN`, que GitHub también da a Dependabot, de solo lectura. Así, el PR de Dependabot
+  corre los mismos checks que los demás.
 
 #### Un aviso de `pnpm audit` sin arreglo
 
