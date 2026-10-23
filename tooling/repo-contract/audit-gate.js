@@ -99,6 +99,17 @@ export function evaluate(run, allowlist, now) {
   return { errors: [...allowlistErrors(entries, today), ...blocking], notes };
 }
 
+/**
+ * Formats one gate error as a GitHub workflow `::error::` command on one line.
+ * The message holds registry text, such as advisory titles and module names.
+ * The escape follows the GitHub rule for command data: `%` first, then `\r` and `\n`.
+ * So a line break in registry text cannot start a new workflow command.
+ */
+export function errorCommand(message) {
+  const escaped = message.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
+  return `::error::${escaped}`;
+}
+
 function readAllowlist(root) {
   try {
     return JSON.parse(readFileSync(join(root, ALLOWLIST), 'utf8'));
@@ -121,7 +132,7 @@ function main() {
   });
   const { errors, notes } = evaluate(run, allowlist, new Date());
   for (const note of notes) console.log(note);
-  for (const error of errors) console.error(`::error::${error}`);
+  for (const error of errors) console.error(errorCommand(error));
   if (errors.length > 0) return 1;
   console.log('pnpm audit: no high or critical advisory outside audit-allowlist.json.');
   return 0;

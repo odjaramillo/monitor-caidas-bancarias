@@ -5,7 +5,7 @@ import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { evaluate } from './audit-gate.js';
+import { errorCommand, evaluate } from './audit-gate.js';
 
 const script = fileURLToPath(new URL('./audit-gate.js', import.meta.url));
 const NOW = new Date('2026-10-22T15:00:00Z');
@@ -119,6 +119,29 @@ describe('dependency audit gate', () => {
     const result = evaluate(run, allowlist(), NOW);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toMatch(/^pnpm audit gave no usable report/);
+  });
+});
+
+describe('workflow error command', () => {
+  // Registry text reaches the log. A line break in it must not start a new workflow command.
+  it('escapes %, carriage returns and line breaks of registry text', () => {
+    const hostile = {
+      ...advisory('GHSA-evil', 'high'),
+      module_name: 'pkg%0A',
+      title: 'bad\r\n::warning::x'
+    };
+    const [error] = evaluate(audit(hostile), allowlist(), NOW).errors;
+    const command = errorCommand(error);
+    expect(command.split(/\r|\n/)).toHaveLength(1);
+    expect(command).toBe(
+      '::error::high advisory GHSA-evil in pkg%250A is not in audit-allowlist.json: bad%0D%0A::warning::x'
+    );
+  });
+
+  it('keeps plain text as it is', () => {
+    expect(errorCommand('high advisory GHSA-a in pkg: a title')).toBe(
+      '::error::high advisory GHSA-a in pkg: a title'
+    );
   });
 });
 
