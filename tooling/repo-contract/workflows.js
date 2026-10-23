@@ -58,7 +58,14 @@ function continueRunBlock(state, line) {
 function readJobStart(state, line) {
   const match = JOB.exec(line);
   if (!match) return false;
-  state.job = { id: match[1], name: null, continueOnError: false, steps: [] };
+  state.job = {
+    id: match[1],
+    name: null,
+    needs: null,
+    if: null,
+    continueOnError: false,
+    steps: []
+  };
   state.jobs.push(state.job);
   state.inSteps = false;
   return true;
@@ -72,6 +79,7 @@ function readJobKey(state, line) {
   state.inSteps = key === 'steps';
   if (key === 'name') state.job.name = value.replace(/^['"]|['"]$/g, '');
   if (key === 'continue-on-error') state.job.continueOnError = value === 'true';
+  if (key === 'needs' || key === 'if') state.job[key] = value;
   return true;
 }
 
@@ -98,7 +106,7 @@ function readLine(state, line) {
 
 /**
  * Returns the jobs of one workflow file in file order.
- * Each job has its id, its `name:` (or null) and its steps.
+ * Each job has its id, its `name:` (or null), its raw `needs:` and `if:` values (or null) and its steps.
  * Each step keeps its raw `name`, `uses`, `run`, `if` and `continue-on-error` values.
  */
 export function parseJobs(text) {

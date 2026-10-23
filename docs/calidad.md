@@ -8,7 +8,8 @@ que el control falla: un control que nunca falla no prueba nada.
   sección 6 de la [propuesta](propuesta.md).
 - **Dónde corre.** `hook` es local y se puede saltar con `--no-verify`. Por eso cada hook se
   repite en un job requerido del CI, y una prueba lo comprueba. `CI` es un job que `main` exige
-  para fusionar. `GitHub` es la protección de la rama `main`.
+  para fusionar. `GitHub` es la protección de la rama `main`. `CI después del merge` corre en
+  cada push a `main`: no bloquea el merge, pero queda en rojo en Actions si falla.
 - **Prueba de que falla.** La corrida que vio el control en rojo. Las del 2026-10-20 se hicieron
   en la auditoría de QA y en los PR de cada gate.
 - **Si agregas una regla o un control, agrega su fila en el mismo PR.** La prueba del índice fija
@@ -50,6 +51,7 @@ en la de convenciones.
 | La tabla nombra controles que existen           | Prueba del índice en `tooling/repo-contract/calidad-index.test.js`                                                    | CI (`checks`: `pnpm test`)                      | Un control renombrado o borrado que la tabla sigue nombrando, o una regla sin fila    | 2026-10-22: borrar una fila, renombrar una ruta o quitar un marcador del README da exit 1 (#116)                                                              |
 | Las dos pantallas funcionan en un navegador     | Playwright con Chromium (`apps/web/e2e`) contra el build estático y la API                                            | CI (`checks`: test:e2e)                         | Un fallo que solo se ve en el navegador, como el de #103                              | 2026-10-22: sin el arreglo de #103, la prueba del JavaScript tardío da exit 1; `->` en vez de `→` en los pares da exit 1 (#111)                               |
 | Los hooks no pierden pasos y el CI los repite   | Prueba de los hooks en `tooling/repo-contract/hooks-contract.test.js`                                                 | CI (`checks`: `pnpm test`)                      | Un hook borrado, un paso quitado o un paso que ningún job requerido repite            | 2026-10-22: quitar `test` de `.husky/pre-push` da exit 1 (#112)                                                                                               |
+| Un despliegue en verde responde                 | Job `deploy` de `.github/workflows/ci.yml`: Deploy Hook de Render con el commit fusionado y `/health` con ese commit  | CI después del merge (`deploy`)                 | Un despliegue que no arranca o deja la versión anterior; un Deploy Hook que falta     | 2026-10-22: secreto vacío, hook en un puerto cerrado o con 401, y `/health` con otro `commit` dan exit distinto de 0. Primera corrida en `main`: pendiente    |
 
 ## Comandos del CI que `pnpm verify` no corre
 
@@ -63,15 +65,15 @@ salvo en estos comandos:
 | `pnpm --filter web exec playwright install --with-deps chromium` | Instala Chromium y paquetes del sistema con permisos de administrador. En local se instala una vez: `pnpm --filter web exec playwright install chromium`           |
 | `pnpm --filter web test:e2e`                                     | Deja reportes reales en la base, y esos reportes hacen fallar las pruebas de la API durante 15 minutos. En local se corre aparte, con la base `mcb_e2e` del README |
 
-`pnpm verify` tampoco corre los jobs `docker`, `secrets` e `issue`, porque no son parte de `checks`.
-`issue` lee la descripción del PR, que solo existe en GitHub.
+`pnpm verify` tampoco corre los jobs `docker`, `secrets`, `issue` y `deploy`, porque no son parte de
+`checks`. `issue` lee la descripción del PR, que solo existe en GitHub. `deploy` despliega producción
+y solo corre en GitHub.
 
 ## Controles en camino
 
-| Regla                           | Control previsto                                | Estado        |
-| ------------------------------- | ----------------------------------------------- | ------------- |
-| Un despliegue en verde responde | Prueba del `/health` después de cada despliegue | #41 (Corte 2) |
-| Las dependencias se actualizan  | Dependabot mensual                              | #46 (Corte 2) |
+| Regla                          | Control previsto   | Estado        |
+| ------------------------------ | ------------------ | ------------- |
+| Las dependencias se actualizan | Dependabot mensual | #46 (Corte 2) |
 
 ## Reglas sin control: convenciones aceptadas
 

@@ -59,8 +59,9 @@ Evidencia de lo que ya está `parcial` o `hecho`:
   y llevarlo al informe (#59).
 - **E10.** El CI corre lint, typecheck, pruebas, build de Docker y gitleaks en cada PR. Las pruebas cubren la API y el
   frontend, y `pnpm test` falla si un proyecto no tiene ninguna (#78) o si su cobertura baja del piso medido (#70).
-  Render despliega `main` cuando pasa el CI, y Vercel despliega `main` y una vista previa por PR (#8, #22). Falta que el
-  pipeline pruebe `/health` después de cada despliegue y que el README lo describa (#41).
+  Vercel despliega `main` y una vista previa por PR (#22). El job `deploy` del CI despliega `main` en Render con su
+  Deploy Hook cuando pasan los checks, y falla si `/health` no responde 200 con el commit desplegado (#8, #41, D23). El
+  README describe el disparador y cada etapa.
 - **E11.** Solo se versiona `.env.example`, y gitleaks revisa el historial en cada PR. La API lee `DATABASE_URL`
   del entorno y no arranca sin ella (#20).
 - **E13.** El CI falla si una dependencia de producción tiene una vulnerabilidad alta o crítica (`pnpm audit`, #70).

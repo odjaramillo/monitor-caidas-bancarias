@@ -22,11 +22,15 @@ export function buildApp(deps: AppDeps, opts: FastifyServerOptions = {}) {
 
   app.register(cors, { origin: process.env.CORS_ORIGIN ?? false });
 
+  // Render sets RENDER_GIT_COMMIT to the deployed commit. The post-deploy check compares it (docs/api.md).
+  // Outside Render the variable is not set, and /health answers without the field.
+  const commit = process.env.RENDER_GIT_COMMIT?.trim() || undefined;
+
   // The uptime monitor and the post-deploy check call this route (docs/api.md).
   app.get('/health', async (req, reply) => {
     try {
       await deps.db.query('select 1');
-      return { status: 'ok', database: 'ok' };
+      return commit ? { status: 'ok', database: 'ok', commit } : { status: 'ok', database: 'ok' };
     } catch (err) {
       req.log.error({ err }, 'database health check failed');
       return reply.code(503).send({ status: 'error', database: 'unreachable' });
