@@ -10,6 +10,9 @@ que el control falla: un control que nunca falla no prueba nada.
   repite en un job requerido del CI, y una prueba lo comprueba. `CI` es un job que `main` exige
   para fusionar. `GitHub` es la protección de la rama `main`. `CI después del merge` corre en
   cada push a `main`: no bloquea el merge, pero queda en rojo en Actions si falla.
+  `semanal` corre fuera del camino del merge: cada lunes, en un PR con la etiqueta `mutation` y a
+  mano desde Actions. El estándar de QA lo llama prose-only (advisory): avisa en rojo, pero no
+  bloquea nada.
 - **Prueba de que falla.** La corrida que vio el control en rojo. Las del 2026-10-20 se hicieron
   en la auditoría de QA y en los PR de cada gate.
 - **Si agregas una regla o un control, agrega su fila en el mismo PR.** La prueba del índice fija
@@ -62,6 +65,7 @@ en la de convenciones.
 | Las excepciones a los topes solo bajan          | `tooling/repo-contract/function-shape.test.js` fija la lista; `reportUnusedDisableDirectives` en `eslint.config.js`   | CI (`checks`: `pnpm test` y `pnpm lint`)        | Un `eslint-disable` nuevo de un tope, uno sin su issue, o uno que ya no oculta nada   | 2026-10-22: un `eslint-disable` de más o de menos da exit 1 en las pruebas; uno que no oculta un error da exit 1 en `pnpm lint` (#120)                        |
 | El piso de cobertura sube con la cobertura      | `pnpm coverage:check` (`tooling/repo-contract/coverage-ratchet.js`); `pnpm coverage:ratchet` escribe el piso nuevo    | CI (`checks`: `pnpm coverage:check`)            | Un PR que sube la cobertura y deja el piso viejo, que luego deja bajarla sin aviso    | 2026-10-22: 0,11 puntos sobre el piso da exit 1, 0,1 da exit 0; sin resumen da exit 1; bajo el piso, `pnpm test` da exit 1 (#120)                             |
 | Las métricas solo leen y no bloquean            | Prueba en `tooling/repo-contract/metrics-workflow.test.js` sobre `.github/workflows/metrics.yml`                      | CI (`checks`: `pnpm test`)                      | Un workflow de métricas que pide escritura, hace `git push` o corre en cada PR        | 2026-10-22: `contents: write` o un paso `git push` en `.github/workflows/metrics.yml` da exit 1 (#121)                                                        |
+| Las pruebas de `levels.ts` detectan mutantes    | Stryker sobre `apps/api/src/levels.ts`, umbral `break` de `apps/api/mutation-baseline.json`                           | `mutation`, semanal: prose-only (advisory)      | Una línea que las pruebas ejecutan pero no comprueban; el puntaje baja del medido     | 2026-10-22: `break` en 99, sobre el puntaje medido de 98,78, da exit 1 (#119). Primera corrida en GitHub: pendiente                                           |
 
 ## Medición de la forma de las funciones
 
@@ -99,8 +103,8 @@ salvo en estos comandos:
 | `pnpm --filter web exec playwright install --with-deps chromium` | Instala Chromium y paquetes del sistema con permisos de administrador. En local se instala una vez: `pnpm --filter web exec playwright install chromium`           |
 | `pnpm --filter web test:e2e`                                     | Deja reportes reales en la base, y esos reportes hacen fallar las pruebas de la API durante 15 minutos. En local se corre aparte, con la base `mcb_e2e` del README |
 
-`pnpm verify` tampoco corre los jobs `docker`, `secrets`, `issue` y `deploy`, porque no son parte de
-`checks`. `issue` lee la descripción del PR, que solo existe en GitHub. `deploy` despliega producción
+`pnpm verify` tampoco corre los jobs `docker`, `secrets`, `issue`, `deploy` y `mutation`, porque no son
+parte de `checks`. `issue` lee la descripción del PR, que solo existe en GitHub. `deploy` despliega producción
 y solo corre en GitHub.
 
 ## Reglas sin control: convenciones aceptadas

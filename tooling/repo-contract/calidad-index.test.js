@@ -55,7 +55,8 @@ const CONTROLLED_RULES = [
   'Cada paquete del workspace tiene script `test`',
   'Topes de parámetros, anidamiento y largo',
   'Las excepciones a los topes solo bajan',
-  'El piso de cobertura sube con la cobertura'
+  'El piso de cobertura sube con la cobertura',
+  'Las pruebas de `levels.ts` detectan mutantes'
 ];
 
 function read(path) {
