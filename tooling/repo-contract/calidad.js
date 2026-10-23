@@ -12,6 +12,9 @@ const JOB_NAME = /^[a-z][a-z0-9_-]*$/;
 // pnpm runs these commands itself. They are not scripts of a package.json.
 const PNPM_COMMANDS = new Set(['audit', 'exec', 'install']);
 
+// These pnpm flags take the next word as their value, for example `--filter web`.
+const PNPM_VALUE_FLAGS = new Set(['--filter', '-F', '--dir', '-C']);
+
 // Only these columns name controls. The other columns describe the rule and the failure.
 const CONTROL_COLUMNS = ['Control', 'Dónde corre'];
 
@@ -49,13 +52,24 @@ function isPath(token) {
   return token.includes('/') || /\.[a-z]+$/.test(token);
 }
 
+// Returns the first word after `pnpm` that is not a flag or the value of a flag.
+function pnpmScript(token) {
+  const words = token.split(/\s+/).slice(1);
+  for (let i = 0; i < words.length; i += 1) {
+    if (!words[i].startsWith('-')) return words[i];
+    if (PNPM_VALUE_FLAGS.has(words[i])) i += 1;
+  }
+  return undefined;
+}
+
 /**
  * Returns the reference that one backticked token makes, or null for plain text.
- * `pnpm <name>` names a script. A token with `/` or a file extension names a path or an Action.
+ * `pnpm <name>` names a script. The reader skips the pnpm flags before the name.
+ * A token with `/` or a file extension names a path or an Action.
  * A bare name in the "Dónde corre" column names a CI job.
  */
 export function referenceOf(token, column) {
-  if (token.startsWith('pnpm ')) return { kind: 'script', name: token.split(/\s+/)[1] };
+  if (token.startsWith('pnpm ')) return { kind: 'script', name: pnpmScript(token) };
   if (isPath(token)) return { kind: 'path', name: token };
   if (column === 'Dónde corre' && JOB_NAME.test(token)) return { kind: 'job', name: token };
   return null;
@@ -82,7 +96,10 @@ export function referenceExists(reference, repo) {
   return repo.hasPath(reference.name) || repo.actions.has(reference.name);
 }
 
-/** Splits the lines into rules: each numbered item and each paragraph is one rule. */
+/**
+ * Splits the lines into blocks: each numbered item and each paragraph is one block.
+ * A block holds one or more rules, and each rule has its own marker.
+ */
 export function ruleBlocks(lines) {
   const blocks = [];
   let current = [];

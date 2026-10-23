@@ -12,7 +12,12 @@ while read -r _ local_sha _ remote_sha; do
   if [ "$remote_sha" != "$zero" ] && git cat-file -e "$remote_sha^{commit}" 2>/dev/null; then
     base=$remote_sha
   else
-    base=$(git merge-base "$local_sha" origin/main)
+    # A failed lookup must stop the push with a reason, so the hook checks the result.
+    if ! base=$(git merge-base "$local_sha" origin/main); then
+      echo 'pre-push: cannot find the base of the push, because `git merge-base` with origin/main failed.' >&2
+      echo 'pre-push: run `git fetch origin main` and push again.' >&2
+      exit 1
+    fi
   fi
   break
 done

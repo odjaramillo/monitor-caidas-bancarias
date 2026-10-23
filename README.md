@@ -292,11 +292,15 @@ este repositorio, solo un estado del commit, y el sitio estático no dice qué c
 Una prueba en `tooling/repo-contract` lee los workflows como texto. Falla si un job requerido
 desaparece o cambia de nombre, si un comando de gate deja de correr, si un job queda solo con
 pasos de preparación o si `pnpm verify` se separa de `checks`. También falla si `deploy` deja de
-llamar al Deploy Hook, de comparar el `commit` de `/health` o de esperar a los jobs requeridos.
+llamar al Deploy Hook, de comparar el `commit` de `/health` o de esperar a los jobs requeridos, y
+si cambia el `concurrency` del CI (un push nuevo cancela la corrida vieja de la misma rama) o el de
+`deploy` (un despliegue a la vez, y el nuevo cancela al viejo).
 Otra prueba del mismo paquete lee `docs/calidad.md`. Falla si una fila nombra un archivo, un script
 o un job que no existe, o si una regla de "Cómo trabajamos" no tiene su fila.
 Una tercera lee las pruebas y el workspace. Falla con un `.skip` sin su issue y su fecha, o
-vencido, y con un paquete sin script `test`.
+vencido, y con un paquete sin script `test`. Para que estas pruebas no dejen de correr en silencio,
+`pnpm test` corre `tooling/repo-contract` con `pnpm --dir`, que falla si el paquete pierde su
+script `test`, y después corre los demás paquetes.
 Una cuarta fija el gate de mutación: falla si el umbral no sale de la medición fechada, si Stryker
 muta otro archivo o si `mutation` pasa a ser un job requerido.
 
@@ -308,8 +312,9 @@ muta otro archivo o si `mutation` pasa a ser un job requerido.
 - El piso sube cuando sube la cobertura (#120). Después de `pnpm test`, `checks` corre
   `pnpm coverage:check`: falla si una métrica quedó más de 0,1 puntos sobre su piso. Entonces
   corre `pnpm coverage:ratchet` y haz commit de los configs. El script escribe los números nuevos y
-  la fecha de hoy junto al piso, y nunca lo baja. Ningún workflow hace commits a `main`: el piso
-  nuevo llega en tu PR. Nunca bajes el piso para que el CI pase: escribe la prueba que falta.
+  la fecha de hoy junto al piso, y nunca lo baja. Si un proyecto falla, no escribe ningún config.
+  Ningún workflow hace commits a `main`: el piso nuevo llega en tu PR. Nunca bajes el piso para que
+  el CI pase: escribe la prueba que falta.
 - ESLint limita cada función de producción a 4 parámetros, 3 niveles de bloques y 31 líneas, justo
   sobre el p95 medido. La medición y las funciones viejas sobre el tope están en
   [calidad](docs/calidad.md).

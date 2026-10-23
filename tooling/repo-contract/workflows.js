@@ -10,6 +10,7 @@ export const REQUIRED_JOBS = ['checks', 'docker', 'secrets', 'issue'];
 
 const JOB = /^ {2}([A-Za-z0-9_-]+):\s*$/;
 const JOB_KEY = /^ {4}([A-Za-z0-9_-]+):\s*(.*)$/;
+const JOB_MAP_KEY = /^ {6}([A-Za-z0-9_-]+):\s*(.*)$/;
 const STEP_START = /^ {6}- (.*)$/;
 const STEP_KEY = /^ {8}([A-Za-z0-9_-]+):\s*(.*)$/;
 const KEY_VALUE = /^([A-Za-z0-9_-]+):\s*(.*)$/;
@@ -64,10 +65,12 @@ function readJobStart(state, line) {
     needs: null,
     if: null,
     continueOnError: false,
+    concurrency: null,
     steps: []
   };
   state.jobs.push(state.job);
   state.inSteps = false;
+  state.inConcurrency = false;
   return true;
 }
 
@@ -77,6 +80,8 @@ function readJobKey(state, line) {
   const [, key, rawValue] = match;
   const value = stripComment(rawValue);
   state.inSteps = key === 'steps';
+  state.inConcurrency = key === 'concurrency' && value === '';
+  if (key === 'concurrency') state.job.concurrency = value === '' ? {} : value;
   if (key === 'name') state.job.name = value.replace(/^['"]|['"]$/g, '');
   if (key === 'continue-on-error') state.job.continueOnError = value === 'true';
   if (key === 'needs' || key === 'if') state.job[key] = value;
@@ -101,12 +106,20 @@ function readLine(state, line) {
     return;
   }
   if (!state.inJobs || readJobStart(state, line) || !state.job) return;
-  if (!readJobKey(state, line) && state.inSteps) readStepLine(state, line);
+  if (readJobKey(state, line)) return;
+  if (state.inSteps) readStepLine(state, line);
+  if (state.inConcurrency) readConcurrencyLine(state, line);
+}
+
+function readConcurrencyLine(state, line) {
+  const pair = JOB_MAP_KEY.exec(line);
+  if (pair) state.job.concurrency[pair[1]] = stripComment(pair[2]);
 }
 
 /**
  * Returns the jobs of one workflow file in file order.
  * Each job has its id, its `name:` (or null), its raw `needs:` and `if:` values (or null) and its steps.
+ * Its `concurrency` is a map of its raw values, the raw value of a one-line form, or null.
  * Each step keeps its raw `name`, `uses`, `run`, `if` and `continue-on-error` values.
  */
 export function parseJobs(text) {
@@ -116,11 +129,29 @@ export function parseJobs(text) {
     job: null,
     inSteps: false,
     step: null,
-    inRunBlock: false
+    inRunBlock: false,
+    inConcurrency: false
   };
   for (const line of text.split('\n')) readLine(state, line);
   closeRunBlock(state);
   return state.jobs;
+}
+
+/**
+ * Returns the raw values of a top-level map, such as the workflow `concurrency:`.
+ * Returns null when the key is missing. The reader keeps only the keys two spaces deep.
+ */
+export function topLevelMap(text, key) {
+  const lines = text.split('\n');
+  const start = lines.findIndex((line) => stripComment(line) === `${key}:`);
+  if (start < 0) return null;
+  const map = {};
+  for (const line of lines.slice(start + 1)) {
+    if (/^\S/.test(line)) break;
+    const pair = /^ {2}([A-Za-z0-9_-]+):\s*(.*)$/.exec(line);
+    if (pair) map[pair[1]] = stripComment(pair[2]);
+  }
+  return map;
 }
 
 /** Returns the status-check context of a job: its `name:`, or its id when it has no name. */

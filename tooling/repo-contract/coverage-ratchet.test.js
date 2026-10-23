@@ -182,4 +182,17 @@ describe('ratchet script', () => {
     expect(readFileSync(join(root, 'apps/web/vite.config.ts'), 'utf8')).toBe(configText(FLOORS));
     expect(run({ root, write: false }).errors).toEqual([]);
   });
+
+  it('writes no config with --write when one project fails', () => {
+    writeSummary('apps/api', { ...FLOORS, lines: 91 });
+    writeSummary('apps/web', FLOORS);
+    const undated = configText(FLOORS).replace(/ {6}\/\/ Floor = .*\n/, '');
+    writeFileSync(join(root, 'apps/web/vite.config.ts'), undated);
+    const result = cli('--write');
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('apps/web: The thresholds have no dated comment');
+    expect(result.stdout).toBe('');
+    expect(readFileSync(join(root, 'apps/api/vitest.config.ts'), 'utf8')).toBe(configText(FLOORS));
+    expect(readFileSync(join(root, 'apps/web/vite.config.ts'), 'utf8')).toBe(undated);
+  });
 });

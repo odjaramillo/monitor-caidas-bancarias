@@ -1,12 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
+import { localDatabaseUrl } from './e2e/database-url.js';
 import { API_URL, WEB_URL } from './e2e/env.js';
 
-// The tests send reports, so they write to the database. A remote database is refused.
-// The error never prints the URL, because it can carry the password.
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl || !['localhost', '127.0.0.1'].includes(new URL(databaseUrl).hostname)) {
-  throw new Error('The browser tests need DATABASE_URL set to a PostgreSQL on localhost.');
-}
+// The tests write to the database, so only a PostgreSQL on localhost is accepted.
+const databaseUrl = localDatabaseUrl(process.env.DATABASE_URL);
 
 // Browser tests of the two screens (issue #111). They run against the static build and the
 // compiled API, so run `pnpm build` first. Only Chromium: other browsers are out of scope.

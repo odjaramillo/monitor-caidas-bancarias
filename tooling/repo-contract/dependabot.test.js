@@ -10,13 +10,26 @@ import { describe, expect, it } from 'vitest';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 
+// A cold start of commitlint loads its config. It takes about 1 s here.
+// The limits leave room for a slow or loaded CI runner.
+const PROCESS_TIMEOUT_MS = 30_000;
+const TEST_TIMEOUT_MS = 60_000;
+
 // Runs commitlint of the root package on one message, like the `checks` job does.
-function commitlint(message) {
+// A process that does not finish in time fails the test with its own message.
+function commitlint(message, timeout = PROCESS_TIMEOUT_MS) {
   const result = spawnSync(join(root, 'node_modules/.bin/commitlint'), [], {
     cwd: root,
     input: message,
-    encoding: 'utf8'
+    encoding: 'utf8',
+    timeout
   });
+  if (result.error?.code === 'ETIMEDOUT') {
+    throw new Error(
+      `commitlint did not finish within ${timeout} ms. The machine is slow or commitlint hangs.`
+    );
+  }
+  if (result.error) throw result.error;
   return { status: result.status, output: result.stdout + result.stderr };
 }
 
@@ -48,7 +61,14 @@ const DEPENDABOT_COMMIT = [
   ''
 ].join('\n');
 
-describe('commitlint and Dependabot commits', () => {
+// Each test starts one commitlint process, so each test gets the larger limit.
+describe('commitlint and Dependabot commits', { timeout: TEST_TIMEOUT_MS }, () => {
+  it('fails with a clear message when commitlint does not finish in time', () => {
+    expect(() => commitlint('chore: x', 1)).toThrow(
+      'commitlint did not finish within 1 ms. The machine is slow or commitlint hangs.'
+    );
+  });
+
   // commitlint skips the length check on a line with a URL. Dependabot writes its long lines as links.
   it('accepts a grouped Dependabot commit with body lines longer than 100 characters', () => {
     expect(DEPENDABOT_COMMIT.split('\n').some((line) => line.length > 100)).toBe(true);

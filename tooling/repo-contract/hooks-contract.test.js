@@ -88,6 +88,16 @@ describe('pre-push selection', () => {
   );
 });
 
+// `sh -e` stops the hook at a failed `git merge-base` without a word (S7 item 7).
+// The hook must check the result and say on stderr why the push stops.
+describe('pre-push base lookup', () => {
+  it('stops with a message on stderr when git merge-base fails', () => {
+    expect(readHook('pre-push')).toMatch(
+      /\n {4}if ! base=\$\(git merge-base "\$local_sha" origin\/main\); then\n( {6}echo 'pre-push: [^'\n]+' >&2\n)+ {6}exit 1\n {4}fi\n/
+    );
+  });
+});
+
 describe('hook reader', () => {
   it('keeps only the pnpm lines, in order', () => {
     const text = [

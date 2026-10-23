@@ -33,6 +33,28 @@ function triggerViolations(text) {
     : [`triggers must be exactly ${expected.join(' and ')}, not ${triggers.join(', ')}`];
 }
 
+// Removes the YAML comments: a line that starts with `#`, and ` #` up to the end of a line.
+// A `#` inside single or double quotes is text, not a comment.
+function withoutComments(text) {
+  return text
+    .split('\n')
+    .map((line) => {
+      let quote = null;
+      for (let i = 0; i < line.length; i += 1) {
+        const char = line[i];
+        if (quote) {
+          if (char === quote) quote = null;
+        } else if (char === "'" || char === '"') {
+          quote = char;
+        } else if (char === '#' && (i === 0 || /\s/.test(line[i - 1]))) {
+          return line.slice(0, i);
+        }
+      }
+      return line;
+    })
+    .join('\n');
+}
+
 function permissionViolations(text) {
   const errors = [];
   const permissions = topLevelBlock(text, 'permissions').map((line) => line.trim());
@@ -40,7 +62,7 @@ function permissionViolations(text) {
     errors.push(`permissions must be exactly ${READ_ONLY.join(', ')}`);
   }
   if (/^[ \t]+permissions:/m.test(text)) errors.push('a job must not change the permissions');
-  if (/\bwrite(-all)?\b/.test(text.replace(/\$GITHUB_STEP_SUMMARY/g, ''))) {
+  if (/\bwrite(-all)?\b/.test(withoutComments(text).replace(/\$GITHUB_STEP_SUMMARY/g, ''))) {
     errors.push('the workflow must not ask for a write permission');
   }
   return errors;
@@ -99,6 +121,11 @@ describe('metrics workflow rules', () => {
       'kept credentials',
       text.replace('persist-credentials: false', 'fetch-depth: 1'),
       /credentials/
+    ],
+    [
+      'write after a # inside quotes',
+      text.replace("cron: '0 6 * * 1'", "cron: '0 6 * * 1 # write'"),
+      /write permission/
     ]
   ])('rejects %s', (_, broken, message) => {
     const violations = metricsWorkflowViolations(broken);
@@ -106,5 +133,14 @@ describe('metrics workflow rules', () => {
       violations.some((violation) => message.test(violation)),
       violations.join('; ')
     ).toBe(true);
+  });
+
+  // A comment is not a permission. Only the keys and values of the workflow ask for access.
+  it('accepts the word write in a full-line or a trailing comment', () => {
+    const commented = text
+      .replace('permissions:\n', '# The job must never write.\npermissions: # no write scope\n')
+      .replace('  contents: read', '  contents: read # not write');
+    expect(commented).not.toBe(text);
+    expect(metricsWorkflowViolations(commented)).toEqual([]);
   });
 });
