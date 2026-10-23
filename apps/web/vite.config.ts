@@ -4,6 +4,8 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    // A focused test in CI would hide the others (issue #118). This is also the Vitest default.
+    allowOnly: !process.env.CI,
     coverage: {
       // pnpm test always measures coverage, so the floor below runs in CI.
       enabled: true,
