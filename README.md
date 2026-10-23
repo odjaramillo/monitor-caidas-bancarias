@@ -205,7 +205,8 @@ Idioma: docs, issues y PR en español; código, identificadores y commits en ing
 [decisiones](docs/decisiones.md)).
 <!-- regla: Docs, issues y PR en español; código y commits en inglés -->
 
-Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre gitleaks en cada PR.
+Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre gitleaks sobre todo
+el historial en cada PR y en cada push a `main`.
 <!-- regla: Ningún secreto en el repositorio -->
 
 ### Labels y milestones
@@ -229,7 +230,10 @@ El pipeline empieza con un PR hacia `main` y termina con la prueba de la API des
    - `docker`: valida `compose.yaml`, construye la imagen de la API, comprueba que no arranca sin
      `DATABASE_URL`, la arranca con PostgreSQL y exige que `/health` responda
      `{"status":"ok","database":"ok"}` en 30 s.
-   - `secrets`: gitleaks revisa todo el historial.
+   - `secrets`: gitleaks 8.30.1 revisa el diff de cada commit de todas las ramas y tags
+     (`git log -p --all`), no solo los commits del PR. El job verifica el checksum del binario y
+     falla si el checkout no trae el historial completo. No revisa archivos sin commit ni el diff
+     propio de un commit de merge, porque `git log -p` no lo muestra.
 
    `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
    - `issue`: exige `Closes #N` o `[sin-issue]`. Si el autor del PR es `dependabot[bot]`, pasa
@@ -272,8 +276,13 @@ vencido, y con un paquete sin script `test`.
   commit de la medición.
 - Cuando tu PR sube la cobertura, sube también el piso a los números nuevos que imprime
   `pnpm test`. Nunca lo bajes para que el CI pase: escribe la prueba que falta.
-- `checks` también corre `pnpm audit --prod --audit-level high` y falla si una dependencia de
-  producción tiene una vulnerabilidad alta o crítica.
+- `checks` también corre `pnpm audit:prod`. El script `tooling/repo-contract/audit-gate.js` corre
+  `pnpm audit --prod --json` y falla si una dependencia de producción tiene un aviso alto o
+  crítico que no está en `audit-allowlist.json`. También falla si el registro no responde o si la
+  salida no es un reporte, y si una entrada de la lista venció.
+- Cada `uses:` de los workflows está fijado al SHA completo de un commit, con el tag en un
+  comentario. Un tag se puede mover a otro código; un SHA no. Para subir una Action, busca el SHA
+  del tag nuevo con `gh api repos/<dueño>/<action>/commits/<tag> --jq .sha` y cambia los dos.
 - Dependabot abre un PR agrupado por ecosistema el primer día de cada mes: uno para npm (todo el
   workspace de pnpm) y otro para las Actions de `.github/workflows`. Sus commits empiezan con
   `chore(deps):` o `ci(deps):` y pasan commitlint. `.github/dependabot.yml` tiene la
@@ -283,3 +292,22 @@ vencido, y con un paquete sin script `test`.
   issue y actualiza esa dependencia a mano en su propio PR. Los jobs de un PR solo usan el
   `GITHUB_TOKEN`, que GitHub también da a Dependabot, de solo lectura. Así, el PR de Dependabot
   corre los mismos checks que los demás.
+
+#### Un aviso de `pnpm audit` sin arreglo
+
+Si `pnpm audit:prod` falla por un aviso alto o crítico, primero actualiza la dependencia. Si
+todavía no hay una versión con el arreglo:
+
+1. Quien abre el PR que encuentra el aviso agrega la entrada en `audit-allowlist.json`, en ese PR:
+   `{ "id": "GHSA-...", "reason": "...", "expires": "AAAA-MM-DD" }`. El `id` es el
+   `github_advisory_id` del reporte.
+2. `reason` dice por qué el riesgo es aceptable hoy: por ejemplo, que la API no llega al código
+   vulnerable, o que no hay arreglo publicado. "No hay tiempo" no es un motivo.
+3. `expires` es el día en que alguien vuelve a mirar el aviso. Elige una fecha cercana, por
+   ejemplo un mes después: el script no limita el plazo. La entrada vale hasta el final de ese
+   día, en UTC.
+4. Quien revisa el PR acepta o rechaza el motivo.
+5. Cuando vence, el CI queda en rojo, también si ningún aviso la usa. Ese día alguien revisa el
+   aviso: actualiza la dependencia y borra la entrada, o la renueva con un motivo nuevo.
+
+El script avisa, sin fallar, cuando una entrada ya no coincide con ningún aviso. Bórrala.
