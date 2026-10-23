@@ -2,7 +2,7 @@
 // The ruleset of `main` matches status checks by job name, so a renamed job removes its gate in silence.
 // These tests read the workflow files as text and fail when a gate disappears.
 
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -32,8 +32,31 @@ const GATES = [
   { job: 'docker', gate: 'compose.yaml validation', run: /^docker compose config -q$/ },
   { job: 'docker', gate: 'API image build', uses: /^docker\/build-push-action@/ },
   { job: 'docker', gate: 'boot refusal without DATABASE_URL', run: /DATABASE_URL is not set/ },
-  { job: 'docker', gate: 'boot and /health', run: /curl \S+ http:\/\/localhost:3000\/health/ },
-  { job: 'secrets', gate: 'gitleaks', uses: /^gitleaks\/gitleaks-action@/ },
+  {
+    job: 'docker',
+    gate: 'boot and /health',
+    run: /curl -fsS --max-time \d+ http:\/\/localhost:3000\/health/
+  },
+  {
+    job: 'docker',
+    gate: 'dead container stops the /health wait',
+    run: /if \[ "\$\(docker inspect -f '\{\{\.State\.Running\}\}' api\)" != true \]; then\n.+\ndocker logs api\nexit 1\n/
+  },
+  {
+    job: 'secrets',
+    gate: 'gitleaks binary with a verified checksum',
+    run: /^printf '%s {2}%s\\n' "\$GITLEAKS_SHA256" "\$archive" \| sha256sum -c -$/m
+  },
+  {
+    job: 'secrets',
+    gate: 'shallow checkout refusal',
+    run: /if \[ "\$\(git rev-parse --is-shallow-repository\)" != false \]; then\n.+\nexit 1\n/
+  },
+  {
+    job: 'secrets',
+    gate: 'gitleaks over the full history',
+    run: /^"\$RUNNER_TEMP\/gitleaks" git --redact --verbose --exit-code 1 --log-opts="--full-history --all --diff-filter=tuxdb" \.$/m
+  },
   { job: 'issue', gate: 'PR links its issue', run: /grep -Eiq '.*close\[sd\]\?.*sin-issue/ },
   // deploy is not a required check: it runs after the merge (D23). These rows keep its steps real.
   {
@@ -59,6 +82,20 @@ const LOCAL_EXCEPTIONS = [
   { ci: /^pnpm --filter web exec playwright install /, docs: 'playwright install --with-deps' },
   { ci: /^pnpm --filter web test:e2e$/, docs: 'pnpm --filter web test:e2e' }
 ];
+
+// A tag can move to another commit. A full commit SHA cannot. The comment keeps the tag readable.
+const PINNED_USES = /^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d+(\.\d+)*$/;
+
+// Returns every `uses:` value of every workflow, with its trailing comment.
+function usesValues() {
+  return readdirSync(workflowsDir)
+    .filter((file) => /\.ya?ml$/.test(file))
+    .flatMap((file) =>
+      [
+        ...readFileSync(join(workflowsDir, file), 'utf8').matchAll(/^\s*(?:- )?uses:\s*(.+)$/gm)
+      ].map((match) => ({ file, uses: match[1].trim() }))
+    );
+}
 
 function rootScripts() {
   return JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {};
@@ -92,6 +129,12 @@ describe('CI contract', () => {
     expect(deploy, 'job deploy').toBeDefined();
     expect(deploy.needs).toBe('[checks, docker, secrets]');
     expect(deploy.if).toBe("github.event_name == 'push' && github.ref == 'refs/heads/main'");
+  });
+
+  it('pins every Action to a full commit SHA with its tag in a comment', () => {
+    const values = usesValues();
+    expect(values.length, 'uses: lines').toBeGreaterThan(0);
+    expect(values.filter(({ uses }) => !PINNED_USES.test(uses))).toEqual([]);
   });
 
   it('runs the audit gate script in pnpm audit:prod', () => {

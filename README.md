@@ -197,7 +197,8 @@ Idioma: docs, issues y PR en español; código, identificadores y commits en ing
 [decisiones](docs/decisiones.md)).
 <!-- regla: Docs, issues y PR en español; código y commits en inglés -->
 
-Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre gitleaks en cada PR.
+Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre gitleaks sobre todo
+el historial en cada PR y en cada push a `main`.
 <!-- regla: Ningún secreto en el repositorio -->
 
 ### Labels y milestones
@@ -221,7 +222,10 @@ El pipeline empieza con un PR hacia `main` y termina con la prueba de la API des
    - `docker`: valida `compose.yaml`, construye la imagen de la API, comprueba que no arranca sin
      `DATABASE_URL`, la arranca con PostgreSQL y exige que `/health` responda
      `{"status":"ok","database":"ok"}` en 30 s.
-   - `secrets`: gitleaks revisa todo el historial.
+   - `secrets`: gitleaks 8.30.1 revisa el diff de cada commit de todas las ramas y tags
+     (`git log -p --all`), no solo los commits del PR. El job verifica el checksum del binario y
+     falla si el checkout no trae el historial completo. No revisa archivos sin commit ni el diff
+     propio de un commit de merge, porque `git log -p` no lo muestra.
 
    `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
    - `issue`: exige `Closes #N` o `[sin-issue]`.
@@ -264,6 +268,9 @@ o un job que no existe, o si una regla de "Cómo trabajamos" no tiene su fila.
   `pnpm audit --prod --json` y falla si una dependencia de producción tiene un aviso alto o
   crítico que no está en `audit-allowlist.json`. También falla si el registro no responde o si la
   salida no es un reporte, y si una entrada de la lista venció.
+- Cada `uses:` de los workflows está fijado al SHA completo de un commit, con el tag en un
+  comentario. Un tag se puede mover a otro código; un SHA no. Para subir una Action, busca el SHA
+  del tag nuevo con `gh api repos/<dueño>/<action>/commits/<tag> --jq .sha` y cambia los dos.
 
 #### Un aviso de `pnpm audit` sin arreglo
 
