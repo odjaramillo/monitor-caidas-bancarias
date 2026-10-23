@@ -61,8 +61,35 @@ en la de convenciones.
 | Un `.skip` lleva su issue y su vencimiento      | Escaneo de `tooling/repo-contract/test-hygiene.js`: `// skip: #N until AAAA-MM-DD` en la línea anterior               | CI (`checks`: `pnpm test`)                      | Un `.skip` sin issue ni fecha, o vencido, que saca una prueba del conteo sin aviso    | 2026-10-22: un `.skip` sin marca, o con fecha pasada, en `levels.test.ts` da exit 1 en las pruebas de `tooling/repo-contract` (#118)                          |
 | Cada paquete del workspace tiene script `test`  | Prueba en `tooling/repo-contract/test-hygiene.test.js` sobre `pnpm-workspace.yaml` y cada `package.json`              | CI (`checks`: `pnpm test`)                      | Un paquete sin pruebas que `pnpm -r test` salta sin aviso                             | 2026-10-22: quitar el script `test` de `apps/web/package.json` da exit 1 (#118). Sin el de `tooling/repo-contract`, esta prueba no corre                      |
 | Dependabot propone actualizaciones cada mes     | `.github/dependabot.yml` (mensual, un grupo por ecosistema), fijado por `tooling/repo-contract/dependabot.test.js`    | CI (`checks`: `pnpm test`)                      | Un `dependabot.yml` borrado, semanal o sin grupo, que deja de abrir un PR al mes      | 2026-10-22: `interval: weekly` o un grupo sin `*` da exit 1; el archivo pasa el esquema de SchemaStore (#46)                                                  |
+| Topes de parámetros, anidamiento y largo        | `max-params` 4, `max-depth` 3 y `max-lines-per-function` 31 en `eslint.config.js`, sobre el p95 medido                | hook y CI (`checks`: `pnpm lint`)               | Una función nueva con 5 parámetros, 4 niveles de bloques o más de 31 líneas           | 2026-10-22: un parámetro, un nivel o una línea más que el tope en `levels.ts` da exit 1 en `pnpm lint`; justo en el tope da exit 0 (#120)                     |
+| Las excepciones a los topes solo bajan          | `tooling/repo-contract/function-shape.test.js` fija la lista; `reportUnusedDisableDirectives` en `eslint.config.js`   | CI (`checks`: `pnpm test` y `pnpm lint`)        | Un `eslint-disable` nuevo de un tope, uno sin su issue, o uno que ya no oculta nada   | 2026-10-22: un `eslint-disable` de más o de menos da exit 1 en las pruebas; uno que no oculta un error da exit 1 en `pnpm lint` (#120)                        |
+| El piso de cobertura sube con la cobertura      | `pnpm coverage:check` (`tooling/repo-contract/coverage-ratchet.js`); `pnpm coverage:ratchet` escribe el piso nuevo    | CI (`checks`: `pnpm coverage:check`)            | Un PR que sube la cobertura y deja el piso viejo, que luego deja bajarla sin aviso    | 2026-10-22: 0,11 puntos sobre el piso da exit 1, 0,1 da exit 0; sin resumen da exit 1; bajo el piso, `pnpm test` da exit 1 (#120)                             |
 | Las métricas solo leen y no bloquean            | Prueba en `tooling/repo-contract/metrics-workflow.test.js` sobre `.github/workflows/metrics.yml`                      | CI (`checks`: `pnpm test`)                      | Un workflow de métricas que pide escritura, hace `git push` o corre en cada PR        | 2026-10-22: `contents: write` o un paso `git push` en `.github/workflows/metrics.yml` da exit 1 (#121)                                                        |
 | Las pruebas de `levels.ts` detectan mutantes    | Stryker sobre `apps/api/src/levels.ts`, umbral `break` de `apps/api/mutation-baseline.json`                           | `mutation`, semanal: prose-only (advisory)      | Una línea que las pruebas ejecutan pero no comprueban; el puntaje baja del medido     | 2026-10-22: `break` en 99, sobre el puntaje medido de 98,78, da exit 1 (#119). Primera corrida en GitHub: pendiente                                           |
+
+## Medición de la forma de las funciones
+
+`pnpm measure:functions` corre `tooling/repo-contract/function-shape.js`. El script corre las
+reglas `max-params`, `max-depth` y `max-lines-per-function` de ESLint con tope 0 y guarda el número
+que cada una reporta. Así cuenta lo mismo que los topes, con los mismos parsers de TypeScript y de
+Svelte. Mide el código de producción de `apps/*/src`: archivos `.ts` y componentes `.svelte`, con su
+`<script>` y las funciones del template. No mide las pruebas (`*.test.ts`) ni los helpers de
+`apps/api/src/testing`, y los topes tampoco los cubren: un `describe` es largo a propósito. Las
+líneas no cuentan las vacías ni las de comentario. El p95 es el valor más chico con el 95 % de las
+funciones en él o por debajo.
+
+| Métrica            | p95 | Máximo | Tope | Funciones sobre el tope |
+| ------------------ | --- | ------ | ---- | ----------------------- |
+| Parámetros         | 3   | 4      | 4    | 0                       |
+| Niveles de bloques | 2   | 2      | 3    | 0                       |
+| Líneas por función | 30  | 61     | 31   | 3                       |
+
+Medido el 2026-10-22 en el commit 831a782: 76 funciones en 23 archivos. Cada tope es el p95 más 1.
+Las tres funciones sobre el tope de líneas son anteriores a #120: `createStatusWorker` (61) y su
+función interna `pass` (36) en `apps/api/src/status-worker.ts`, y `seedDemoCommand` (36) en
+`apps/api/src/demo-seed.ts`. Cada una lleva un `eslint-disable-next-line` con su issue de
+seguimiento, y la prueba fija esa lista. No subas un tope para que el lint pase: divide la función.
+Para cambiar un tope, mide otra vez y actualiza esta tabla en el mismo PR.
 
 ## Comandos del CI que `pnpm verify` no corre
 

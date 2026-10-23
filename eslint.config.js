@@ -30,6 +30,28 @@ export default ts.config(
     }
   },
   {
+    // Caps on the shape of production functions (issue #120).
+    // Premise: `node tooling/repo-contract/function-shape.js` measured 76 functions in 23 files
+    // on 2026-10-22 at commit 831a782. p95 and maximum: 3 and 4 parameters, depth 2 and 2,
+    // 30 and 61 lines without blank and comment lines. Each cap is the p95 plus 1.
+    // A function above a cap before #120 carries a disable comment with its tracking issue.
+    // tooling/repo-contract/function-shape.test.js pins the list of those comments.
+    // Measure again and update docs/calidad.md before you change a cap. Never raise a cap to pass lint.
+    // Tests and test helpers stay outside: a `describe` callback is long by design.
+    files: ['apps/*/src/**/*.{ts,svelte}'],
+    ignores: ['**/*.test.ts', 'apps/api/src/testing/**'],
+    // A disable comment that no longer hides an error fails lint, so the old violations only shrink.
+    linterOptions: { reportUnusedDisableDirectives: 'error' },
+    rules: {
+      'max-params': ['error', { max: 4 }],
+      'max-depth': ['error', { max: 3 }],
+      'max-lines-per-function': [
+        'error',
+        { max: 31, skipBlankLines: true, skipComments: true, IIFEs: true }
+      ]
+    }
+  },
+  {
     // levels.ts holds the level rules. Its tests need no database and no server (issue #115).
     files: ['apps/api/src/levels.ts'],
     rules: {

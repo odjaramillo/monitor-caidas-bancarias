@@ -52,6 +52,9 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      # Fails when coverage rose above its floor: the PR must raise the floor too (#120).
+      - name: Coverage floors equal the measured coverage
+        run: pnpm coverage:check
       - run: pnpm build
       # Browser tests of the two screens (issue #111). They start the API from the build above with
       # this job's PostgreSQL, and serve the static frontend. The frontend calls the API at its

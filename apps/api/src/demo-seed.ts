@@ -109,6 +109,7 @@ export interface SeedDemoCommandDeps {
 
 // seedDemoCommand is the whole `seed:demo` command; seed-demo.ts only wires it to the terminal.
 // It returns the exit code.
+// eslint-disable-next-line max-lines-per-function -- Longer than the cap before #120. Tracking issue: #135.
 export async function seedDemoCommand(
   env: NodeJS.ProcessEnv,
   { createDb, ask, log, error }: SeedDemoCommandDeps

@@ -12,9 +12,10 @@ export default defineConfig({
       provider: 'v8',
       // app.html is a template, not code, so it stays out of the report.
       include: ['src/**/*.{ts,svelte}'],
-      reporter: ['text-summary'],
+      reporter: ['text-summary', 'json-summary'],
       // Floor = coverage measured on 2026-10-20 at commit 0c53616 plus layout.test.ts (issue #70, decision D16).
-      // Raise these numbers when coverage rises. Never lower them to make CI green.
+      // CI fails when coverage rises above these numbers, so run pnpm coverage:ratchet (issue #120).
+      // Never lower them to make CI green.
       thresholds: {
         statements: 100,
         branches: 100,
