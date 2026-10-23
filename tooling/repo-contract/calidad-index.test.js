@@ -23,6 +23,7 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 // The rows of "Reglas con control". Keep this list equal to the table.
 // A row that disappears, or a row that nobody adds here, makes the test fail.
 const CONTROLLED_RULES = [
+  'Dependabot propone actualizaciones cada mes',
   'Un despliegue en verde responde',
   'Las dos pantallas funcionan en un navegador',
   'Commits con Conventional Commits',

@@ -172,7 +172,8 @@ antes de empezar. Para usar otro puerto de la API, pon la misma `PUBLIC_API_URL`
    <!-- regla: Commits con Conventional Commits -->
    <!-- regla: Estilo y formato del código -->
 4. **Un PR por issue, con `Closes #N` en inglés.** "Cierra #N" no cierra el issue. Un PR sin issue
-   lleva `[sin-issue]`. El CI rechaza el PR si no tiene ninguno de los dos.
+   lleva `[sin-issue]`. El CI rechaza el PR si no tiene ninguno de los dos. Solo el PR mensual de
+   Dependabot pasa sin enlace.
    <!-- regla: Un PR por issue con `Closes #N` o `[sin-issue]` -->
 5. **`main` está protegida.** Solo entra por PR, con el CI en verde.
    <!-- regla: `main` solo recibe PR con el CI en verde -->
@@ -231,7 +232,9 @@ El pipeline empieza con un PR hacia `main` y termina con la prueba de la API des
    - `secrets`: gitleaks revisa todo el historial.
 
    `.github/workflows/pr.yml` corre en cada PR, también cuando editas su descripción:
-   - `issue`: exige `Closes #N` o `[sin-issue]`.
+   - `issue`: exige `Closes #N` o `[sin-issue]`. Si el autor del PR es `dependabot[bot]`, pasa
+     sin enlace y lo dice en un aviso. Corre igual en cada PR, porque un check requerido que se
+     salta cuenta como aprobado.
 
    Vercel publica además una vista previa del frontend para cada PR.
 
@@ -271,3 +274,12 @@ vencido, y con un paquete sin script `test`.
   `pnpm test`. Nunca lo bajes para que el CI pase: escribe la prueba que falta.
 - `checks` también corre `pnpm audit --prod --audit-level high` y falla si una dependencia de
   producción tiene una vulnerabilidad alta o crítica.
+- Dependabot abre un PR agrupado por ecosistema el primer día de cada mes: uno para npm (todo el
+  workspace de pnpm) y otro para las Actions de `.github/workflows`. Sus commits empiezan con
+  `chore(deps):` o `ci(deps):` y pasan commitlint. `.github/dependabot.yml` tiene la
+  configuración, y una prueba de `tooling/repo-contract` la fija.
+- Para revisar el PR de Dependabot, lee las notas de versión de cada cambio mayor y espera a que
+  pasen `checks`, `docker`, `secrets` e `issue`. Si un cambio rompe algo, cierra el PR, abre un
+  issue y actualiza esa dependencia a mano en su propio PR. Los jobs de un PR solo usan el
+  `GITHUB_TOKEN`, que GitHub también da a Dependabot, de solo lectura. Así, el PR de Dependabot
+  corre los mismos checks que los demás.

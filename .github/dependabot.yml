@@ -1,0 +1,31 @@
+# Dependabot version updates (issue #46).
+# Each ecosystem opens at most one grouped PR per month, on the first day of the month.
+# tooling/repo-contract/dependabot.test.js pins this file.
+version: 2
+updates:
+  # The pnpm workspace: the root package.json, pnpm-workspace.yaml and pnpm-lock.yaml.
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    groups:
+      npm:
+        patterns:
+          - '*'
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'
+
+  # The Actions of .github/workflows. Dependabot also updates a SHA-pinned `uses:` line
+  # and its version comment on the same line.
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    groups:
+      actions:
+        patterns:
+          - '*'
+    commit-message:
+      prefix: 'ci'
+      include: 'scope'
