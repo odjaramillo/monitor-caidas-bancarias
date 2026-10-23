@@ -146,24 +146,35 @@ curl localhost:3000/health   # {"status":"ok","database":"ok"}
 
 1. **Todo empieza en un issue.** Usa la plantilla Tarea o Bug. Cada issue cita su requisito (`E#` o
    `R#`) y tiene criterios de aceptación. Asígnatelo antes de empezar.
+   <!-- regla: Todo empieza en un issue con la plantilla, su requisito y criterios de aceptación -->
 2. **Una rama por issue**: `<usuario>/<numero>-<tema>`, por ejemplo `oscar/5-post-reports`.
+   <!-- regla: Una rama por issue con el formato `<usuario>/<numero>-<tema>` -->
 3. **Commits en inglés con [Conventional Commits](https://www.conventionalcommits.org)**:
    `feat(api): accept bank reports`. Un hook de Git rechaza otros formatos y el CI los revisa de
    nuevo. Antes de cada commit, otro hook corre ESLint y Prettier sobre los archivos preparados.
+   <!-- regla: Commits con Conventional Commits -->
+   <!-- regla: Estilo y formato del código -->
 4. **Un PR por issue, con `Closes #N` en inglés.** "Cierra #N" no cierra el issue. Un PR sin issue
    lleva `[sin-issue]`. El CI rechaza el PR si no tiene ninguno de los dos.
+   <!-- regla: Un PR por issue con `Closes #N` o `[sin-issue]` -->
 5. **`main` está protegida.** Solo entra por PR, con el CI en verde.
+   <!-- regla: `main` solo recibe PR con el CI en verde -->
 6. **Si el PR cumple un requisito, actualiza su estado** en `docs/requisitos.md` en el mismo PR.
+   <!-- regla: Si el PR cumple un requisito, actualiza `docs/requisitos.md` -->
 7. **Cada integrante usa su propia identidad de Git** (`git config user.name` y `user.email`).
    El historial es la evidencia del aporte de cada uno.
+   <!-- regla: Cada integrante usa su propia identidad de Git -->
 8. **Antes de abrir el PR, corre `pnpm verify`.** Corre los comandos del job `checks` en el mismo
    orden, salvo commitlint (ver [calidad](docs/calidad.md)). Necesita el PostgreSQL de
    `docker compose up -d`.
+   <!-- regla: `pnpm verify` repite el job `checks` -->
 
 Idioma: docs, issues y PR en español; código, identificadores y commits en inglés (D9 en
 [decisiones](docs/decisiones.md)).
+<!-- regla: Docs, issues y PR en español; código y commits en inglés -->
 
 Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre gitleaks en cada PR.
+<!-- regla: Ningún secreto en el repositorio -->
 
 ### Labels y milestones
 
@@ -193,6 +204,8 @@ Los secretos viven solo en las plataformas y en tu `.env` local. El CI corre git
 Una prueba en `tooling/repo-contract` lee los workflows como texto. Falla si un job requerido
 desaparece o cambia de nombre, si un comando de gate deja de correr, si un job queda solo con
 pasos de preparación o si `pnpm verify` se separa de `checks`.
+Otra prueba del mismo paquete lee `docs/calidad.md`. Falla si una fila nombra un archivo, un script
+o un job que no existe, o si una regla de "Cómo trabajamos" no tiene su fila.
 
 ### Cobertura y dependencias
 

@@ -2,11 +2,11 @@
 // The ruleset of `main` matches status checks by job name, so a renamed job removes its gate in silence.
 // These tests read the workflow files as text and fail when a gate disappears.
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { contextOf, isCheckStep, noOpJobs, parseJobs } from './workflows.js';
+import { contextOf, isCheckStep, noOpJobs, parseJobs, readWorkflows } from './workflows.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const workflowsDir = join(root, '.github/workflows');
@@ -34,14 +34,6 @@ const GATES = [
 // CI commands that `pnpm verify` does not run. docs/calidad.md names each one and its reason.
 const LOCAL_EXCEPTIONS = [{ ci: /^pnpm exec commitlint /, docs: 'pnpm exec commitlint' }];
 
-function readWorkflows() {
-  return readdirSync(workflowsDir)
-    .filter((file) => /\.ya?ml$/.test(file))
-    .flatMap((file) =>
-      parseJobs(readFileSync(join(workflowsDir, file), 'utf8')).map((job) => ({ file, ...job }))
-    );
-}
-
 function jobByContext(jobs, context) {
   return jobs.find((job) => contextOf(job) === context);
 }
@@ -52,7 +44,7 @@ function verifyCommands() {
 }
 
 describe('CI contract', () => {
-  const jobs = readWorkflows();
+  const jobs = readWorkflows(workflowsDir);
 
   it('keeps every required job under its required name', () => {
     const contexts = jobs.map(contextOf);
