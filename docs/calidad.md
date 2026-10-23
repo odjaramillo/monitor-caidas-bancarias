@@ -17,7 +17,8 @@ que el control falla: un control que nunca falla no prueba nada.
   en la auditoría de QA y en los PR de cada gate.
 - **Si agregas una regla o un control, agrega su fila en el mismo PR.** La prueba del índice fija
   las filas, así que la fila nueva también va en `tooling/repo-contract/calidad-index.test.js`. Si
-  la regla está en "Cómo trabajamos", ponle también su marcador.
+  la regla está en "Cómo trabajamos", ponle también su marcador y agrega su nombre en `README_RULES`
+  del mismo archivo.
 
 ## Reglas con control
 

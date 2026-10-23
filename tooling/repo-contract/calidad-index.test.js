@@ -59,6 +59,27 @@ const CONTROLLED_RULES = [
   'Las pruebas de `levels.ts` detectan mutantes'
 ];
 
+// The rules of "Cómo trabajamos" in the README. Each rule is one row of docs/calidad.md.
+// One block can hold more than one rule, and the prose does not show how many.
+// So this list pins the rules, and each rule needs its own marker in the README.
+const README_RULES = [
+  'Todo empieza en un issue con la plantilla, su requisito y criterios de aceptación',
+  'Una rama por issue con el formato `<usuario>/<numero>-<tema>`',
+  'Commits con Conventional Commits',
+  'Estilo y formato del código',
+  'Un PR por issue con `Closes #N` o `[sin-issue]`',
+  '`main` solo recibe PR con el CI en verde',
+  'Si el PR cumple un requisito, actualiza `docs/requisitos.md`',
+  'Cada integrante usa su propia identidad de Git',
+  '`pnpm verify` repite el job `checks`',
+  'Lo cambiado compila y pasa sus pruebas',
+  'Ninguna prueba enfocada, pendiente o con espera',
+  'Un `.skip` lleva su issue y su vencimiento',
+  'Cada paquete del workspace tiene script `test`',
+  'Docs, issues y PR en español; código y commits en inglés',
+  'Ningún secreto en el repositorio'
+];
+
 function read(path) {
   return readFileSync(join(root, path), 'utf8');
 }
@@ -119,6 +140,11 @@ describe('rule index of docs/calidad.md', () => {
     expect(unmarked).toEqual([]);
   });
 
+  it('every rule of "Cómo trabajamos" has its own regla marker', () => {
+    const sorted = (names) => [...names].sort();
+    expect(sorted(readmeRules.flatMap(markersOf))).toEqual(sorted(README_RULES));
+  });
+
   it('every regla marker of the README names a row of docs/calidad.md', () => {
     const rows = new Set([...controlled, ...conventions].map((row) => row.Regla));
     const markers = readmeRules.flatMap(markersOf);
@@ -129,6 +155,10 @@ describe('rule index of docs/calidad.md', () => {
 describe('calidad reader', () => {
   it('classifies backticked tokens by their syntax and column', () => {
     expect(referenceOf('pnpm lint', 'Control')).toEqual({ kind: 'script', name: 'lint' });
+    expect(referenceOf('pnpm audit --prod --json', 'Control')).toEqual({
+      kind: 'script',
+      name: 'audit'
+    });
     expect(referenceOf('.husky/commit-msg', 'Control')).toEqual({
       kind: 'path',
       name: '.husky/commit-msg'
@@ -141,6 +171,19 @@ describe('calidad reader', () => {
     expect(referenceOf('complexity', 'Control')).toBeNull();
     expect(referenceOf('/health', 'Control')).toBeNull();
     expect(referenceOf('docker compose config -q', 'Control')).toBeNull();
+  });
+
+  it.each([
+    ['pnpm -r test', 'test'],
+    ['pnpm --recursive test', 'test'],
+    ['pnpm --filter x test', 'test'],
+    ['pnpm --filter=x test', 'test'],
+    ['pnpm -F x test', 'test'],
+    ['pnpm --filter web test:e2e', 'test:e2e'],
+    ['pnpm --filter web exec playwright install --with-deps chromium', 'exec'],
+    ['pnpm -C apps/api --filter=x -r test --silent', 'test']
+  ])('skips the pnpm flags and their values in %s', (token, name) => {
+    expect(referenceOf(token, 'Control')).toEqual({ kind: 'script', name });
   });
 
   it('reads only the control columns of a row', () => {

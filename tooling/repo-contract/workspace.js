@@ -1,12 +1,13 @@
 // Reads the packages of the pnpm workspace and the test files inside them.
 // The reader knows only the globs that pnpm-workspace.yaml uses: `<dir>/*` and a plain `<dir>`.
-// Any other glob makes it throw, so a new glob shape cannot drop a package in silence.
+// It reads a block list, quoted or not. Any other glob or list shape makes it throw.
+// So a new shape cannot drop a package in silence.
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const GLOB = /^[A-Za-z0-9._-]+(\/[A-Za-z0-9._-]+)*(\/\*)?$/;
-const LIST_ITEM = /^\s+- (.+)$/;
+const LIST_ITEM = /^\s*- (.+)$/;
 
 // Tests live in these files: `*.test.ts`, `*.test.js` and the browser tests `*.e2e.ts`.
 const TEST_FILE = /\.(test|e2e)\.[jt]s$/;
@@ -21,14 +22,17 @@ function unquote(value) {
 /** Returns the entries of the `packages:` list of pnpm-workspace.yaml. */
 export function workspaceGlobs(text) {
   const lines = text.split('\n');
-  const start = lines.findIndex((line) => /^packages:\s*$/.test(line));
+  const start = lines.findIndex((line) => /^packages:/.test(line));
   if (start < 0) return [];
+  const inline = lines[start].replace(/^packages:/, '').trim();
+  if (inline !== '') throw new Error(`Unsupported workspace packages: ${inline}`);
   const rest = lines.slice(start + 1);
-  const end = rest.findIndex((line) => /^\S/.test(line));
+  const end = rest.findIndex((line) => /^\S/.test(line) && !LIST_ITEM.test(line));
   const globs = (end < 0 ? rest : rest.slice(0, end))
     .map((line) => LIST_ITEM.exec(line))
     .filter((match) => match !== null)
     .map((match) => unquote(match[1]));
+  if (globs.length === 0) throw new Error('The workspace packages list has no entries');
   const unknown = globs.filter((glob) => !GLOB.test(glob));
   if (unknown.length > 0) throw new Error(`Unsupported workspace globs: ${unknown.join(', ')}`);
   return globs;

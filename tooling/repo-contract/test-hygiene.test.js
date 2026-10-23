@@ -2,11 +2,12 @@
 // A focused test hides the rest of its file, and a skipped or pending test leaves the count in silence.
 // A fixed wait makes the suite slow and flaky. A package without a `test` script drops out of `pnpm -r test`.
 
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ESLint } from 'eslint';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { skipViolations } from './test-hygiene.js';
 import { testFiles, workspaceGlobs, workspacePackageDirs } from './workspace.js';
 
@@ -173,9 +174,53 @@ describe('workspace', () => {
     expect(workspaceGlobs(text)).toEqual(['apps/*', 'tooling/*', 'docs']);
   });
 
+  it('reads a quoted entry like an unquoted one', () => {
+    const text = 'packages:\n  - "apps/*"\n  - \'tooling/*\'\n  - docs\n';
+    expect(workspaceGlobs(text)).toEqual(['apps/*', 'tooling/*', 'docs']);
+  });
+
+  it('reads list items that start at the first column', () => {
+    expect(workspaceGlobs("packages:\n- apps/*\n- 'tooling/*'\nallowBuilds:\n")).toEqual([
+      'apps/*',
+      'tooling/*'
+    ]);
+  });
+
+  it('refuses a packages key whose entries it cannot read', () => {
+    expect(() => workspaceGlobs("packages: ['apps/*']\n")).toThrow("['apps/*']");
+    expect(() => workspaceGlobs('packages:\n\nallowBuilds:\n')).toThrow('no entries');
+  });
+
+  it('returns no globs when the file has no packages key', () => {
+    expect(workspaceGlobs('allowBuilds:\n  esbuild: true\n')).toEqual([]);
+  });
+
   it('refuses a glob that the reader does not understand', () => {
     expect(() => workspaceGlobs('packages:\n  - apps/**\n')).toThrow('apps/**');
     expect(() => workspaceGlobs('packages:\n  - "!apps/old"\n')).toThrow('!apps/old');
+  });
+
+  describe('in a scratch workspace', () => {
+    let scratch;
+
+    afterEach(() => {
+      if (scratch) rmSync(scratch, { recursive: true, force: true });
+      scratch = undefined;
+    });
+
+    it('finds the packages of quoted entries', () => {
+      scratch = mkdtempSync(join(tmpdir(), 'workspace-'));
+      const files = {
+        'pnpm-workspace.yaml': 'packages:\n  - \'apps/*\'\n  - "tooling/*"\n',
+        'apps/api/package.json': '{}',
+        'tooling/repo-contract/package.json': '{}'
+      };
+      for (const [path, text] of Object.entries(files)) {
+        mkdirSync(dirname(join(scratch, path)), { recursive: true });
+        writeFileSync(join(scratch, path), text);
+      }
+      expect(workspacePackageDirs(scratch)).toEqual(['apps/api', 'tooling/repo-contract']);
+    });
   });
 
   it('finds every package of the workspace', () => {
