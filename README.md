@@ -196,20 +196,25 @@ El pipeline empieza con un PR hacia `main` y termina con la prueba de la API des
 2. **Merge.** `main` exige `checks`, `docker`, `secrets` e `issue` en verde y la rama al día. El
    merge es un push a `main`, así que `ci.yml` corre otra vez sobre el commit fusionado.
 3. **Frontend en Vercel.** Vercel despliega `main` en cada push.
-4. **API en Render.** Render despliega `main` con Auto-Deploy "After CI Checks Pass": espera los
-   checks del commit fusionado y no despliega si alguno falla.
-5. **Prueba después del despliegue.** `.github/workflows/deploy-check.yml` corre cuando `CI`
-   termina en verde sobre un push a `main`. Su job `api-health` llama al `/health` público de la
-   API cada 20 s, con `curl --max-time 60`, durante 15 minutos como máximo. Pasa cuando la API
-   responde 200 con `commit` igual al commit fusionado. Si no, falla. No es un check requerido,
-   porque corre después del merge.
+4. **API en Render.** Render tiene Auto-Deploy apagado y despliega solo desde el job `deploy` de
+   `ci.yml` (D23). El job corre en un push a `main`, después de `checks`, `docker` y `secrets` en
+   verde. Llama al Deploy Hook de Render con el commit fusionado (`curl --fail --max-time 30`). Un
+   merge nuevo cancela el `deploy` anterior.
+5. **Prueba después del despliegue.** El mismo job llama al `/health` público de la API cada 20 s,
+   con `curl --max-time 60`, durante 15 minutos como máximo. Pasa cuando la API responde 200 con
+   `commit` igual al commit fusionado. Si no, falla. `deploy` no es un check requerido, porque
+   corre después del merge.
+
+Si falta el secreto `RENDER_DEPLOY_HOOK_URL`, el job `deploy` falla antes de llamar a Render, y
+la API no se despliega.
 
 El despliegue del frontend no tiene prueba posterior. Vercel no crea despliegues de GitHub en
 este repositorio, solo un estado del commit, y el sitio estático no dice qué commit sirve.
 
 Una prueba en `tooling/repo-contract` lee los workflows como texto. Falla si un job requerido
 desaparece o cambia de nombre, si un comando de gate deja de correr, si un job queda solo con
-pasos de preparación o si `pnpm verify` se separa de `checks`.
+pasos de preparación o si `pnpm verify` se separa de `checks`. También falla si `deploy` deja de
+llamar al Deploy Hook, de comparar el `commit` de `/health` o de esperar a los jobs requeridos.
 
 ### Cobertura y dependencias
 

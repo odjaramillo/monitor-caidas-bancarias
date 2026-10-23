@@ -28,7 +28,23 @@ const GATES = [
   { job: 'docker', gate: 'boot refusal without DATABASE_URL', run: /DATABASE_URL is not set/ },
   { job: 'docker', gate: 'boot and /health', run: /curl \S+ http:\/\/localhost:3000\/health/ },
   { job: 'secrets', gate: 'gitleaks', uses: /^gitleaks\/gitleaks-action@/ },
-  { job: 'issue', gate: 'PR links its issue', run: /grep -Eiq '.*close\[sd\]\?.*sin-issue/ }
+  { job: 'issue', gate: 'PR links its issue', run: /grep -Eiq '.*close\[sd\]\?.*sin-issue/ },
+  // deploy is not a required check: it runs after the merge (D23). These rows keep its steps real.
+  {
+    job: 'deploy',
+    gate: 'empty Deploy Hook secret',
+    run: /if \[ -z "\$RENDER_DEPLOY_HOOK_URL" \]; then\n.+\nexit 1\n/
+  },
+  {
+    job: 'deploy',
+    gate: 'Render Deploy Hook call',
+    run: /^curl -sS --fail --max-time \d+ -X POST .*"\$\{RENDER_DEPLOY_HOOK_URL\}.*ref=\$\{EXPECTED_COMMIT\}"$/m
+  },
+  {
+    job: 'deploy',
+    gate: '/health with the deployed commit',
+    run: /curl -sS --max-time .+ "\$HEALTH_URL"[\s\S]+\.commit[\s\S]+\[ "\$code" = 200 \] && \[ "\$commit" = "\$EXPECTED_COMMIT" \]/
+  }
 ];
 
 // CI commands that `pnpm verify` does not run. docs/calidad.md names each one and its reason.
@@ -68,6 +84,13 @@ describe('CI contract', () => {
     );
     expect(step, `step for ${run ?? uses}`).toBeDefined();
     expect(isCheckStep(job, step), 'the step is skipped or cannot fail the job').toBe(true);
+  });
+
+  it('deploys only after the required jobs pass on a push to main', () => {
+    const deploy = jobByContext(jobs, 'deploy');
+    expect(deploy, 'job deploy').toBeDefined();
+    expect(deploy.needs).toBe('[checks, docker, secrets]');
+    expect(deploy.if).toBe("github.event_name == 'push' && github.ref == 'refs/heads/main'");
   });
 
   it('has no job with only setup steps', () => {
@@ -119,6 +142,19 @@ describe('workflow reader', () => {
       '        continue-on-error: true'
     ].join('\n');
     expect(noOpJobs(parseJobs(text))).toEqual(['skipped', 'tolerant']);
+  });
+
+  it('keeps the needs and if values of a job', () => {
+    const text = [
+      'jobs:',
+      '  deploy:',
+      '    needs: [checks, docker] # after the gates',
+      "    if: github.ref == 'refs/heads/main'",
+      '    steps:',
+      '      - run: x'
+    ].join('\n');
+    const [job] = parseJobs(text);
+    expect([job.needs, job.if]).toEqual(['[checks, docker]', "github.ref == 'refs/heads/main'"]);
   });
 
   it('uses the job name as the status-check context', () => {

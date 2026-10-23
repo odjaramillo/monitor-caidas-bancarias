@@ -103,3 +103,61 @@ jobs:
       - uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Render deploys the API only from this job: Auto-Deploy is Off in Render (D23, #41).
+  # It runs after the merge, so it is not a required check for PRs.
+  deploy:
+    needs: [checks, docker, secrets]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20 # hard stop above the 15 min deadline of the /health step
+    permissions: {} # the job only calls Render, so it needs no GitHub token scope
+    # A newer merge replaces the older deploy, so the newer run cancels the older one.
+    concurrency:
+      group: deploy-render
+      cancel-in-progress: true
+    env:
+      EXPECTED_COMMIT: ${{ github.sha }}
+    steps:
+      - name: Render deploys the merged commit through its Deploy Hook
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }} # read from env, never printed
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "::error::The secret RENDER_DEPLOY_HOOK_URL is empty. Add the Render Deploy Hook URL in the repository secrets."
+            exit 1
+          fi
+          # The hook URL already has the key in its query. ref pins the deploy to the commit CI checked.
+          case "$RENDER_DEPLOY_HOOK_URL" in *\?*) sep='&' ;; *) sep='?' ;; esac
+          curl -sS --fail --max-time 30 -X POST -o /dev/null "${RENDER_DEPLOY_HOOK_URL}${sep}ref=${EXPECTED_COMMIT}"
+          echo "Render accepted the deploy of $EXPECTED_COMMIT."
+      - name: The API on Render answers /health with 200 and the merged commit
+        env:
+          HEALTH_URL: https://monitor-caidas-bancarias.onrender.com/health
+          # Premise (2026-10-22, not measured yet): Render builds the Docker image and starts it
+          # in less than 15 min on the free plan. Re-evaluate with the durations of the first runs.
+          DEADLINE_SECONDS: 900
+          INTERVAL_SECONDS: 20
+          # The README says a sleeping API can take 50 s or more to answer the first request.
+          CURL_MAX_TIME: 60
+        run: |
+          # Render keeps the old instance until the new one starts. A 200 alone can come from the old
+          # instance, so the step also waits until /health reports the commit that CI checked.
+          deadline=$((SECONDS + DEADLINE_SECONDS))
+          while :; do
+            out=$(curl -sS --max-time "$CURL_MAX_TIME" -w '\n%{http_code}' "$HEALTH_URL") || true
+            code=${out##*$'\n'}
+            body=${out%$'\n'*}
+            commit=$(printf '%s' "$body" | jq -r '.commit // empty' 2>/dev/null) || commit=''
+            if [ "$code" = 200 ] && [ "$commit" = "$EXPECTED_COMMIT" ]; then
+              echo "Render serves $EXPECTED_COMMIT and /health answers 200: $body"
+              exit 0
+            fi
+            echo "Waiting for $EXPECTED_COMMIT: HTTP $code, commit '${commit:-none}'."
+            if [ $((SECONDS + INTERVAL_SECONDS)) -ge "$deadline" ]; then
+              break
+            fi
+            sleep "$INTERVAL_SECONDS"
+          done
+          echo "::error::$HEALTH_URL did not answer 200 with commit $EXPECTED_COMMIT in $DEADLINE_SECONDS s."
+          exit 1

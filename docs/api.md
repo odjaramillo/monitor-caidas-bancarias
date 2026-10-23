@@ -276,7 +276,7 @@ aparece.
 { "status": "ok", "database": "ok", "commit": "7c10c71a2b3c4d5e6f708192a3b4c5d6e7f80912" }
 ```
 
-La prueba después del despliegue compara `commit` con el commit fusionado. Así distingue la versión
+El job `deploy` del CI compara `commit` con el commit fusionado. Así distingue la versión
 nueva de la anterior, que Render mantiene viva hasta que la nueva arranca.
 
 ### Respuesta `503 Service Unavailable`
