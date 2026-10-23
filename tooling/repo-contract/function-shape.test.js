@@ -146,6 +146,28 @@ describe('function shape caps in eslint.config.js', () => {
     expect(mismatched).toEqual([]);
   });
 
+  // The docs state the caps as numbers. Pin them to eslint.config.js, so a raised cap
+  // fails here until the docs change in the same PR.
+  it('state the same cap numbers in docs/calidad.md and the README', async () => {
+    const caps = await capsOf('apps/api/src/levels.ts');
+    const max = Object.fromEntries(SHAPE_RULES.map((rule) => [rule, caps[rule].max]));
+    const calidad = readFileSync(join(root, 'docs/calidad.md'), 'utf8');
+    const readme = readFileSync(join(root, 'README.md'), 'utf8');
+    const tope = (label) =>
+      calidad.match(new RegExp(`^\\| ${label} +\\|[^|]+\\|[^|]+\\| (\\d+) `, 'm'));
+    expect({
+      'max-params': Number(tope('Parámetros')?.[1]),
+      'max-depth': Number(tope('Niveles de bloques')?.[1]),
+      'max-lines-per-function': Number(tope('Líneas por función')?.[1])
+    }).toEqual(max);
+    const row = `\`max-params\` ${max['max-params']}, \`max-depth\` ${max['max-depth']} y \`max-lines-per-function\` ${max['max-lines-per-function']}`;
+    expect(calidad).toContain(row);
+    const sentence = new RegExp(
+      `a ${max['max-params']} parámetros, ${max['max-depth']} niveles de bloques y\\s+${max['max-lines-per-function']} líneas`
+    );
+    expect(readme).toMatch(sentence);
+  });
+
   it.each([
     'apps/api/src/levels.test.ts',
     'apps/api/src/testing/database.ts',

@@ -276,8 +276,8 @@ vencido, y con un paquete sin script `test`.
 ### Cobertura y dependencias
 
 - `pnpm test` mide la cobertura de cada proyecto y falla si baja del piso. El piso está en
-  `thresholds`, en `apps/api/vitest.config.ts` y en `apps/web/vite.config.ts`, con la fecha y el
-  commit de la medición.
+  `thresholds`, en `apps/api/vitest.config.ts` y en `apps/web/vite.config.ts`, con la fecha de la
+  medición.
 - El piso sube cuando sube la cobertura (#120). Después de `pnpm test`, `checks` corre
   `pnpm coverage:check`: falla si una métrica quedó más de 0,1 puntos sobre su piso. Entonces
   corre `pnpm coverage:ratchet` y haz commit de los configs. El script escribe los números nuevos y
