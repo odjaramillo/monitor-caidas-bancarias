@@ -22,7 +22,7 @@ const workflowsDir = join(root, '.github/workflows');
 // Each gate names its job and the step that runs it.
 const GATES = [
   { job: 'checks', gate: 'frozen-lockfile install', run: /^pnpm install --frozen-lockfile$/ },
-  { job: 'checks', gate: 'dependency audit', run: /^pnpm audit --prod --audit-level high$/ },
+  { job: 'checks', gate: 'dependency audit', run: /^pnpm audit:prod$/ },
   { job: 'checks', gate: 'commitlint', run: /^pnpm exec commitlint --from .+ --to .+$/ },
   { job: 'checks', gate: 'lint', run: /^pnpm lint$/ },
   { job: 'checks', gate: 'typecheck', run: /^pnpm typecheck$/ },
@@ -60,9 +60,12 @@ const LOCAL_EXCEPTIONS = [
   { ci: /^pnpm --filter web test:e2e$/, docs: 'pnpm --filter web test:e2e' }
 ];
 
+function rootScripts() {
+  return JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {};
+}
+
 function verifyCommands() {
-  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-  return (pkg.scripts?.verify ?? '').split(' && ').filter((command) => command !== '');
+  return (rootScripts().verify ?? '').split(' && ').filter((command) => command !== '');
 }
 
 describe('CI contract', () => {
@@ -89,6 +92,10 @@ describe('CI contract', () => {
     expect(deploy, 'job deploy').toBeDefined();
     expect(deploy.needs).toBe('[checks, docker, secrets]');
     expect(deploy.if).toBe("github.event_name == 'push' && github.ref == 'refs/heads/main'");
+  });
+
+  it('runs the audit gate script in pnpm audit:prod', () => {
+    expect(rootScripts()['audit:prod']).toBe('node tooling/repo-contract/audit-gate.js');
   });
 
   it('has no job with only setup steps', () => {

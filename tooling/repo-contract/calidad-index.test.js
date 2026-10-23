@@ -41,6 +41,7 @@ const CONTROLLED_RULES = [
   '`compose.yaml` es válido',
   'Ningún secreto en el repositorio',
   'Sin vulnerabilidades altas en producción',
+  'Un aviso aceptado tiene motivo y vence',
   '`pnpm verify` repite el job `checks`',
   'Los jobs requeridos existen y revisan algo',
   'Los hooks no pierden pasos y el CI los repite',

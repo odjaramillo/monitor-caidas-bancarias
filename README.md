@@ -260,5 +260,26 @@ o un job que no existe, o si una regla de "Cómo trabajamos" no tiene su fila.
   commit de la medición.
 - Cuando tu PR sube la cobertura, sube también el piso a los números nuevos que imprime
   `pnpm test`. Nunca lo bajes para que el CI pase: escribe la prueba que falta.
-- `checks` también corre `pnpm audit --prod --audit-level high` y falla si una dependencia de
-  producción tiene una vulnerabilidad alta o crítica.
+- `checks` también corre `pnpm audit:prod`. El script `tooling/repo-contract/audit-gate.js` corre
+  `pnpm audit --prod --json` y falla si una dependencia de producción tiene un aviso alto o
+  crítico que no está en `audit-allowlist.json`. También falla si el registro no responde o si la
+  salida no es un reporte, y si una entrada de la lista venció.
+
+#### Un aviso de `pnpm audit` sin arreglo
+
+Si `pnpm audit:prod` falla por un aviso alto o crítico, primero actualiza la dependencia. Si
+todavía no hay una versión con el arreglo:
+
+1. Quien abre el PR que encuentra el aviso agrega la entrada en `audit-allowlist.json`, en ese PR:
+   `{ "id": "GHSA-...", "reason": "...", "expires": "AAAA-MM-DD" }`. El `id` es el
+   `github_advisory_id` del reporte.
+2. `reason` dice por qué el riesgo es aceptable hoy: por ejemplo, que la API no llega al código
+   vulnerable, o que no hay arreglo publicado. "No hay tiempo" no es un motivo.
+3. `expires` es el día en que alguien vuelve a mirar el aviso. Elige una fecha cercana, por
+   ejemplo un mes después: el script no limita el plazo. La entrada vale hasta el final de ese
+   día, en UTC.
+4. Quien revisa el PR acepta o rechaza el motivo.
+5. Cuando vence, el CI queda en rojo, también si ningún aviso la usa. Ese día alguien revisa el
+   aviso: actualiza la dependencia y borra la entrada, o la renueva con un motivo nuevo.
+
+El script avisa, sin fallar, cuando una entrada ya no coincide con ningún aviso. Bórrala.
