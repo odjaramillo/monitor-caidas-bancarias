@@ -1,0 +1,111 @@
+[
+  {
+    "number": 104,
+    "mergedAt": "2026-10-22T06:00:00Z",
+    "updatedAt": "2026-10-22T06:00:00Z",
+    "baseRefName": "main",
+    "closingIssuesReferences": {
+      "nodes": [
+        {
+          "number": 10,
+          "createdAt": "2026-10-18T00:00:00Z",
+          "repository": { "nameWithOwner": "team/app" }
+        }
+      ]
+    }
+  },
+  {
+    "number": 103,
+    "mergedAt": "2026-10-21T18:00:00Z",
+    "updatedAt": "2026-10-21T18:00:00Z",
+    "baseRefName": "main",
+    "closingIssuesReferences": { "nodes": [] }
+  },
+  {
+    "number": 102,
+    "mergedAt": "2026-10-21T12:00:00Z",
+    "updatedAt": "2026-10-21T12:00:00Z",
+    "baseRefName": "main",
+    "closingIssuesReferences": {
+      "nodes": [
+        {
+          "number": 11,
+          "createdAt": "2026-10-20T12:00:00Z",
+          "repository": { "nameWithOwner": "team/app" }
+        },
+        {
+          "number": 12,
+          "createdAt": "2026-10-17T12:00:00Z",
+          "repository": { "nameWithOwner": "team/app" }
+        }
+      ]
+    }
+  },
+  {
+    "number": 101,
+    "mergedAt": "2026-10-20T00:00:00Z",
+    "updatedAt": "2026-10-20T00:00:00Z",
+    "baseRefName": "main",
+    "closingIssuesReferences": {
+      "nodes": [
+        {
+          "number": 10,
+          "createdAt": "2026-10-18T00:00:00Z",
+          "repository": { "nameWithOwner": "team/app" }
+        }
+      ]
+    }
+  },
+  {
+    "number": 100,
+    "mergedAt": "2026-10-19T09:00:00Z",
+    "updatedAt": "2026-10-19T09:00:00Z",
+    "baseRefName": "feature/stack",
+    "closingIssuesReferences": { "nodes": [] }
+  },
+  {
+    "number": 99,
+    "mergedAt": "2026-10-15T00:00:00Z",
+    "updatedAt": "2026-10-15T00:00:00Z",
+    "baseRefName": "main",
+    "closingIssuesReferences": {
+      "nodes": [
+        {
+          "number": 7,
+          "createdAt": "2026-10-01T00:00:00Z",
+          "repository": { "nameWithOwner": "team/other" }
+        }
+      ]
+    }
+  },
+  {
+    "number": 98,
+    "mergedAt": "2026-10-14T00:00:00Z",
+    "updatedAt": "2026-10-14T00:00:00Z",
+    "baseRefName": "main",
+    "closingIssuesReferences": {
+      "nodes": [
+        {
+          "number": 5,
+          "createdAt": "2026-10-04T00:00:00Z",
+          "repository": { "nameWithOwner": "team/app" }
+        }
+      ]
+    }
+  },
+  {
+    "number": 97,
+    "mergedAt": "2026-10-04T23:00:00Z",
+    "updatedAt": "2026-10-04T23:00:00Z",
+    "baseRefName": "main",
+    "closingIssuesReferences": {
+      "nodes": [
+        {
+          "number": 3,
+          "createdAt": "2026-10-01T00:00:00Z",
+          "repository": { "nameWithOwner": "team/app" }
+        }
+      ]
+    }
+  }
+]
