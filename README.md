@@ -312,8 +312,9 @@ muta otro archivo o si `mutation` pasa a ser un job requerido.
 - El piso sube cuando sube la cobertura (#120). Después de `pnpm test`, `checks` corre
   `pnpm coverage:check`: falla si una métrica quedó más de 0,1 puntos sobre su piso. Entonces
   corre `pnpm coverage:ratchet` y haz commit de los configs. El script escribe los números nuevos y
-  la fecha de hoy junto al piso, y nunca lo baja. Ningún workflow hace commits a `main`: el piso
-  nuevo llega en tu PR. Nunca bajes el piso para que el CI pase: escribe la prueba que falta.
+  la fecha de hoy junto al piso, y nunca lo baja. Si un proyecto falla, no escribe ningún config.
+  Ningún workflow hace commits a `main`: el piso nuevo llega en tu PR. Nunca bajes el piso para que
+  el CI pase: escribe la prueba que falta.
 - ESLint limita cada función de producción a 4 parámetros, 3 niveles de bloques y 31 líneas, justo
   sobre el p95 medido. La medición y las funciones viejas sobre el tope están en
   [calidad](docs/calidad.md).

@@ -114,6 +114,7 @@ function raised(floors, summary) {
   );
 }
 
+// Returns the errors of one project and, with `write`, the new config text. It writes no file.
 function checkProject(root, { dir, config }, write, today) {
   const text = readFileSync(join(root, config), 'utf8');
   const { floors } = readFloors(text);
@@ -122,8 +123,7 @@ function checkProject(root, { dir, config }, write, today) {
   if (!write || errors.some((error) => error.includes('has no number'))) return { errors };
   const next = raised(floors, summary);
   if (METRICS.every((metric) => next[metric] === floors[metric])) return { errors: [] };
-  writeFileSync(join(root, config), writeFloors(text, next, today));
-  return { errors: [], changed: config };
+  return { errors: [], update: { config, text: writeFloors(text, next, today) } };
 }
 
 function localDate() {
@@ -131,20 +131,25 @@ function localDate() {
   return new Date().toLocaleDateString('sv-SE');
 }
 
-/** Checks, or with `write` raises, the floor of every project. Fails closed on a missing input. */
+/**
+ * Checks, or with `write` raises, the floor of every project. Fails closed on a missing input.
+ * With `write`, it first computes every new config. It writes them only when no project fails.
+ */
 export function run({ root, write = false, today = localDate() }) {
   const errors = [];
-  const changed = [];
+  const updates = [];
   for (const project of PROJECTS) {
     try {
       const result = checkProject(root, project, write, today);
       errors.push(...result.errors);
-      if (result.changed) changed.push(result.changed);
+      if (result.update) updates.push(result.update);
     } catch (error) {
       errors.push(`${project.dir}: ${error.message}`);
     }
   }
-  return { errors, changed };
+  if (errors.length > 0) return { errors, changed: [] };
+  for (const { config, text } of updates) writeFileSync(join(root, config), text);
+  return { errors, changed: updates.map(({ config }) => config) };
 }
 
 function main(argv) {
