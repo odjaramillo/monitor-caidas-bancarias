@@ -2,17 +2,22 @@
 // The ruleset of `main` matches status checks by job name, so a renamed job removes its gate in silence.
 // These tests read the workflow files as text and fail when a gate disappears.
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { contextOf, isCheckStep, noOpJobs, parseJobs } from './workflows.js';
+import {
+  REQUIRED_JOBS,
+  contextOf,
+  isCheckStep,
+  jobByContext,
+  noOpJobs,
+  parseJobs,
+  readWorkflows
+} from './workflows.js';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const workflowsDir = join(root, '.github/workflows');
-
-// The required status checks of `main`. Keep this list equal to the ruleset.
-const REQUIRED_JOBS = ['checks', 'docker', 'secrets', 'issue'];
 
 // Each gate names its job and the step that runs it.
 const GATES = [
@@ -23,6 +28,7 @@ const GATES = [
   { job: 'checks', gate: 'typecheck', run: /^pnpm typecheck$/ },
   { job: 'checks', gate: 'test', run: /^pnpm test$/ },
   { job: 'checks', gate: 'build', run: /^pnpm build$/ },
+  { job: 'checks', gate: 'browser tests', run: /^pnpm --filter web test:e2e$/ },
   { job: 'docker', gate: 'compose.yaml validation', run: /^docker compose config -q$/ },
   { job: 'docker', gate: 'API image build', uses: /^docker\/build-push-action@/ },
   { job: 'docker', gate: 'boot refusal without DATABASE_URL', run: /DATABASE_URL is not set/ },
@@ -48,19 +54,11 @@ const GATES = [
 ];
 
 // CI commands that `pnpm verify` does not run. docs/calidad.md names each one and its reason.
-const LOCAL_EXCEPTIONS = [{ ci: /^pnpm exec commitlint /, docs: 'pnpm exec commitlint' }];
-
-function readWorkflows() {
-  return readdirSync(workflowsDir)
-    .filter((file) => /\.ya?ml$/.test(file))
-    .flatMap((file) =>
-      parseJobs(readFileSync(join(workflowsDir, file), 'utf8')).map((job) => ({ file, ...job }))
-    );
-}
-
-function jobByContext(jobs, context) {
-  return jobs.find((job) => contextOf(job) === context);
-}
+const LOCAL_EXCEPTIONS = [
+  { ci: /^pnpm exec commitlint /, docs: 'pnpm exec commitlint' },
+  { ci: /^pnpm --filter web exec playwright install /, docs: 'playwright install --with-deps' },
+  { ci: /^pnpm --filter web test:e2e$/, docs: 'pnpm --filter web test:e2e' }
+];
 
 function verifyCommands() {
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
@@ -68,7 +66,7 @@ function verifyCommands() {
 }
 
 describe('CI contract', () => {
-  const jobs = readWorkflows();
+  const jobs = readWorkflows(workflowsDir);
 
   it('keeps every required job under its required name', () => {
     const contexts = jobs.map(contextOf);
