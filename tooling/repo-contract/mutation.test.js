@@ -75,4 +75,12 @@ describe('mutation workflow', () => {
   it('is not a required check', () => {
     expect(REQUIRED_JOBS).not.toContain('mutation');
   });
+
+  it('keeps the workflow read-only and its steps failing closed', () => {
+    expect(workflow).toMatch(/^permissions:\n {2}contents: read\n\n/m);
+    expect(workflow).not.toMatch(/pull_request_target/);
+    expect(workflow).toMatch(/shell: bash\n {8}run: pnpm --filter api test:mutation/);
+    expect(workflow).toMatch(/if: always\(\)\n {8}uses: actions\/upload-artifact@/);
+    expect(workflow).toMatch(/if-no-files-found: error/);
+  });
 });
