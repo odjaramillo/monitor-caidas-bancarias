@@ -6,8 +6,8 @@ Propuesta de proyecto integrador · Computación en la Nube · UCAB · Octubre 2
 
 > Este archivo es la propuesta tal como la acordó el equipo. No se edita: los cambios posteriores
 > quedan en [decisiones](decisiones.md) y los requisitos que salen de aquí (`R#`) viven en
-> [requisitos](requisitos.md). Cambio conocido: las alertas por Telegram de la sección 9 salieron
-> del proyecto (D11).
+> [requisitos](requisitos.md). Cambios conocidos: la cola con worker y las alertas por Telegram de
+> la sección 9 salieron del proyecto (D21 y D11), y las sondas quedaron fuera del MVP (D22).
 
 ## 1. Resumen
 
@@ -69,7 +69,7 @@ en la CCE del BCV. Desde la app del banco eso no se distingue.
 
 - Cuentas de usuario y comentarios.
 - Aplicación móvil nativa.
-- Sondeo automático de los servidores de los bancos (propuesta pendiente, ver sección 10).
+- Sondeo automático de los servidores de los bancos (D22, ver sección 10).
 
 ### Funciones del MVP
 
@@ -244,23 +244,23 @@ semana 3, no el último día.
 | 3 (19–25 oct) | Primer despliegue público, diagrama inicial, modelo de servicio de cada pieza y datos de prueba para la demo.                                                                      |
 | 26–27 oct     | Ensayo del corte: cada integrante explica su pieza y el flujo completo.                                                                                                            |
 
-Para el segundo corte: caché en Redis, cola con worker, alertas por Telegram, CI/CD completo,
-monitoreo y la prueba de carga.
+Para el segundo corte: caché en Redis, CI/CD completo, monitoreo y la prueba de carga. La cola con
+worker (D21) y las alertas por Telegram (D11) salieron del plan.
 
 ## 10. Riesgos y preguntas abiertas
 
-| Riesgo                                                                      | Plan                                                                                                       |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Sin usuarios reales, el estado nunca cambia en la demo                      | Datos sembrados y la prueba de carga como evidencia; la demo es la quincena simulada                       |
-| Reportes falsos que "tumban" un banco                                       | Un reporte por persona, par de bancos y ventana; CAPTCHA; umbral sobre la línea base                       |
-| Riesgo legal por afirmar que un banco falló                                 | La aplicación solo muestra conteos de reportes, nunca "el banco está caído"                                |
-| La API dormida de Render en plena revisión                                  | Monitor gratuito que la consulta cada 30 s                                                                 |
-| El primer corte coincide con el Parcial 1                                   | Despliegue en la semana 3, no el último día                                                                |
-| Los bancos bloquean las sondas porque Render corre en servidores de EE. UU. | Probarlo en la semana 1 contra 3 bancos antes de prometer la función; si bloquean, las sondas quedan fuera |
+| Riesgo                                                                      | Plan                                                                                 |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Sin usuarios reales, el estado nunca cambia en la demo                      | Datos sembrados y la prueba de carga como evidencia; la demo es la quincena simulada |
+| Reportes falsos que "tumban" un banco                                       | Un reporte por persona, par de bancos y ventana; CAPTCHA; umbral sobre la línea base |
+| Riesgo legal por afirmar que un banco falló                                 | La aplicación solo muestra conteos de reportes, nunca "el banco está caído"          |
+| La API dormida de Render en plena revisión                                  | Monitor gratuito que la consulta cada 30 s                                           |
+| El primer corte coincide con el Parcial 1                                   | Despliegue en la semana 3, no el último día                                          |
+| Los bancos bloquean las sondas porque Render corre en servidores de EE. UU. | Las sondas quedan fuera del MVP (D22)                                                |
 
 ### Pendiente de decidir o verificar
 
-- Sondas (propuesta por aprobar): medir cada pocos minutos si la web pública de cada banco responde
+- Sondas: fuera del MVP (D22). Medirían cada pocos minutos si la web pública de cada banco responde
   y cuánto tarda, como señal automática que no depende de usuarios (#51).
 - Que todo el equipo pueda defender Fastify y SvelteKit: los cinco ya trabajan con el stack (#50).
   Cada uno explica su pieza en el ensayo del corte (#13).

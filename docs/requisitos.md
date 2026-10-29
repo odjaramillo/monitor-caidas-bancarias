@@ -24,7 +24,7 @@ Es la única fuente del estado de un requisito: los issues no llevan labels de e
 | E8  | Base de datos administrada en la nube, adaptada al caso de uso y operativa en producción                           | p. 3, p. 5 | 1, 2  | #3, #4, #20, #39, #40, #59                    | parcial   |
 | E9  | Caché implementada o justificación técnica de no usarla                                                            | p. 5       | 2     | #37, #59                                      | pendiente |
 | E10 | CI/CD o automatización equivalente funcionando                                                                     | p. 3, p. 5 | 2     | #28, #41, #46, #60, #70, #71                  | parcial   |
-| E11 | Secretos fuera del código; ninguna credencial en el repositorio                                                    | p. 3, p. 8 | 1     | #3, #20, #71                                  | parcial   |
+| E11 | Secretos fuera del código; ninguna credencial en el repositorio                                                    | p. 3, p. 8 | 1     | #3, #20, #71, #117                            | hecho     |
 | E12 | Logs, monitoreo de errores y estado del servicio visibles                                                          | p. 3, p. 5 | 2     | #42, #43, #44, #60                            | pendiente |
 | E13 | Medidas mínimas de seguridad                                                                                       | p. 5       | 2     | #27, #30, #32, #46, #57, #70                  | parcial   |
 | E14 | Análisis de cuellos de botella y propuesta ante demanda masiva                                                     | p. 3, p. 5 | 2     | #36, #39, #45, #58                            | pendiente |
@@ -62,8 +62,9 @@ Evidencia de lo que ya está `parcial` o `hecho`:
   Vercel despliega `main` y una vista previa por PR (#22). El job `deploy` del CI despliega `main` en Render con su
   Deploy Hook cuando pasan los checks, y falla si `/health` no responde 200 con el commit desplegado (#8, #41, D23). El
   README describe el disparador y cada etapa.
-- **E11.** Solo se versiona `.env.example`, y gitleaks revisa el historial en cada PR. La API lee `DATABASE_URL`
-  del entorno y no arranca sin ella (#20).
+- **E11.** Solo se versiona `.env.example`. Las credenciales viven solo en las plataformas, bajo la cuenta del
+  equipo (#3, D13). La API lee `DATABASE_URL` del entorno y no arranca sin ella (#20). gitleaks revisa cada commit
+  de todas las ramas y tags en cada PR y en cada push a `main` (#117).
 - **E13.** El CI falla si una dependencia de producción tiene una vulnerabilidad alta o crítica (`pnpm audit`, #70).
   La API rechaza un reporte con campos de más o con valores fuera de las listas (#5). Faltan los límites y
   las cabeceras.
@@ -92,5 +93,11 @@ Estas reglas aplican siempre y no tienen issue propio:
 | R7  | Responder "¿dónde se rompe este pago?" en menos de 5 segundos, en un teléfono con mala señal                                                 | 1     | #7, #16, #18                             | parcial   |
 | R8  | Quincena simulada con k6: de 5 a 500 lecturas y 50 reportes por segundo en 10 minutos, con un banco caído                                    | 2     | #45, #66                                 | pendiente |
 
+Evidencia de R7:
+
+- **R7.** En un teléfono simulado con 3G lenta, la pantalla de estado aparece en unos 3 segundos contra una API
+  falsa con los 100 pares (PR #98), y el formulario en medio segundo contra la API con PostgreSQL local (PR #103).
+  Falta medirlo contra la versión desplegada; ningún issue lo cubre todavía.
+
 Fuera del MVP: cuentas de usuario, comentarios, aplicación móvil nativa, alertas por Telegram (D11)
-y sondeo automático de los servidores de los bancos.
+y sondeo automático de los servidores de los bancos (D22).
