@@ -1,11 +1,143 @@
 # Monitor de caídas bancarias
 
-Aplicación web que muestra dónde se rompe un pago entre bancos en Venezuela: el banco de origen,
-el de destino o el sistema que los conecta. La información sale de reportes de los usuarios.
+Cuando un pago entre bancos falla en Venezuela, nadie sabe si el problema está en el banco de
+origen, en el de destino o en la Cámara de Compensación que los conecta. Este monitor lo muestra
+con lo que reportan los usuarios.
+
+**[Ver el estado](https://monitor-caidas-bancarias.vercel.app)** ·
+[Reportar una falla](https://monitor-caidas-bancarias.vercel.app/reportar) ·
+[Salud de la API](https://monitor-caidas-bancarias.onrender.com/health) ·
+[Decisiones](docs/decisiones.md)
 
 Proyecto integrador de Computación en la Nube (INFO-02028), UCAB, 2026.
 
-## En producción
+| Para conocer el proyecto                                                                                                                                                                                                                         | Para trabajar en él                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| [Problema y alcance](#problema-usuarios-y-alcance-del-mvp) · [Arquitectura](#arquitectura) · [Despliegue](#despliegue) · [Contenedor](#contenedor) · [Modelos de servicio](#modelos-de-servicio) · [Documentos](#documentos) · [Equipo](#equipo) | [Cómo empezar](#cómo-empezar) · [Scripts](#scripts) · [Cómo trabajamos](#cómo-trabajamos) · [CI y despliegue](#ci-y-despliegue) |
+
+## Problema, usuarios y alcance del MVP
+
+Las fallas bancarias en Venezuela son frecuentes y se concentran en los días de pago. La gente se
+entera por X, no por el banco. El 15-05-2026 fallaron a la vez Banesco, Mercantil, BDV, Provincial
+y Banco Plaza en plena quincena, y Banco Plaza atribuyó la falla a la Cámara de Compensación
+Electrónica del BCV.
+
+Cuando la app del banco no abre, la falla se ve sola. Las otras no: el pago sale y no llega, el
+banco propio funciona pero el de destino no, o la falla está en la Cámara de Compensación. Desde la
+app del banco eso no se distingue. Los incidentes y sus fuentes están en la
+[propuesta](docs/propuesta.md), sección 2.
+
+### Usuarios objetivo
+
+- **Comercio (usuario principal).** Un cliente muestra "operación exitosa" y el dinero no llega.
+  Debe decidir si entrega la mercancía, espera o pide otro método de pago.
+- **Quien paga.** El pago salió de su cuenta y no llegó. Quiere saber si reintenta, espera o paga
+  desde otro banco.
+
+### Qué hace el MVP
+
+Quien paga o cobra reporta en un toque qué falló: banco de origen, banco de destino y qué pasó.
+No necesita cuenta. Cada 30 segundos, el worker cuenta los reportes de los últimos 15 minutos y le
+da un nivel a cada uno de los 100 pares origen → destino. La pantalla de estado muestra los 100.
+
+| Nivel                | Reportes en 15 minutos (D19) | Con 3 días de historial (D20)  |
+| -------------------- | ---------------------------- | ------------------------------ |
+| `normal`             | 0                            | Por debajo de 2 veces la base  |
+| `posibles_problemas` | De 1 a 4                     | 2 veces la línea base por hora |
+| `muchos_reportes`    | 5 o más                      | 4 veces la línea base por hora |
+
+La pantalla nunca dice «el banco está caído». Dice cuántas personas reportan problemas (R4). El
+artículo 226 de la Ley de Instituciones del Sector Bancario castiga difundir noticias no
+confirmadas sobre un banco ([propuesta](docs/propuesta.md), sección 3).
+
+| Función del MVP                                                  | Corte | Hoy                                                                |
+| ---------------------------------------------------------------- | ----- | ------------------------------------------------------------------ |
+| Estado por par de bancos (R1)                                    | 1 y 2 | En producción. La caché en Redis llega en el Corte 2 (#37)         |
+| Reportar en un toque, sin cuenta (R2)                            | 1 y 2 | En producción. El límite por dispositivo llega en el Corte 2 (#30) |
+| Detalle por banco: últimas 24 horas y pares más afectados (R3)   | 2     | Pendiente (#25)                                                    |
+| Frenar el abuso: límites, CAPTCHA invisible y respuesta 429 (R5) | 2     | Pendiente (#27, #30)                                               |
+
+Fuera del MVP: cuentas de usuario, comentarios, aplicación móvil nativa, alertas por Telegram (D11)
+y sondeo automático de los servidores de los bancos (D22). El estado de cada requisito está en
+[requisitos](docs/requisitos.md).
+
+## Arquitectura
+
+Un monolito con un worker: la API y el worker corren en el mismo proceso, dentro de un solo
+contenedor (D1). No hay Kubernetes ni microservicios.
+
+```mermaid
+flowchart LR
+  U[Usuario<br/>navegador]
+  subgraph FE["Frontend"]
+    F[SvelteKit estático<br/>Vercel · CDN]
+  end
+  subgraph BE["Backend/API"]
+    subgraph R1["Render · un contenedor Docker"]
+      A[API<br/>Fastify]
+      W[Worker<br/>cada 30 s<br/>estado en memoria]
+    end
+  end
+  subgraph DB["Persistencia"]
+    P[(Supabase PostgreSQL<br/>fuente de verdad)]
+  end
+  subgraph CA["Caché"]
+    R[(Upstash Redis<br/>caché · límites)]
+  end
+  subgraph EX["Servicios Externos"]
+    T[Cloudflare Turnstile<br/>CAPTCHA]
+    S[Sentry<br/>errores]
+    B[Better Stack<br/>monitor]
+  end
+  G[GitHub Actions<br/>CI/CD]
+  U -->|HTTPS| F
+  U -->|HTTPS · JSON<br/>POST /reports · GET /status| A
+  A -->|guarda los reportes| P
+  W -->|lee los reportes| P
+  A -.->|Corte 2| R
+  W -.->|Corte 2| R
+  U -.->|Corte 2 · token del CAPTCHA| T
+  A -.->|Corte 2 · verifica el token| T
+  A -.->|Corte 2 · errores| S
+  B -.->|Corte 2 · GET /health cada 30 s| A
+  G -.->|Deploy Hook| R1
+```
+
+Figura 1. Las líneas continuas son el tráfico de la aplicación hoy. Las punteadas son el despliegue
+desde GitHub Actions y lo que llega en el Corte 2: la caché, el CAPTCHA, los errores y el monitor.
+Supabase, Upstash y Render están en la misma región, Oregon (`us-west-2`).
+
+El navegador descarga el frontend desde la CDN de Vercel y después llama a la API directamente.
+`GET /status` responde desde la memoria del worker, sin consultar la base. La API todavía no usa
+Redis (D21). El detalle de cada componente está en [Arquitectura](docs/arquitectura.md).
+
+| Capa               | Componente                   | Responsabilidad                                                                                   |
+| ------------------ | ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| Frontend           | SvelteKit estático en Vercel | Muestra el estado de cada par de bancos y el formulario de reporte. No tiene servidor propio (D3) |
+| Backend/API        | API en Fastify               | Recibe los reportes, los valida, los guarda en PostgreSQL y sirve el estado                       |
+| Backend/API        | Worker                       | Cada 30 s recalcula el nivel de cada par desde PostgreSQL y lo deja en memoria                    |
+| Persistencia       | Supabase PostgreSQL          | Fuente de verdad: los bancos y los reportes. Solo la API y el worker se conectan                  |
+| Caché              | Upstash Redis                | Corte 2: la caché del estado con 30 s de vida y los contadores de límites (#30, #37)              |
+| Servicios Externos | Cloudflare Turnstile         | Corte 2: CAPTCHA invisible contra bots. La API verifica el token antes de guardar (#27)           |
+| Servicios Externos | Sentry                       | Corte 2: guarda los errores de la API con su contexto (#42)                                       |
+| Servicios Externos | Better Stack                 | Corte 2: llama a `/health` cada 30 s y mantiene despierta la API (D5, #43)                        |
+| CI/CD              | GitHub Actions               | Revisa cada PR y despliega la API en Render al fusionar en `main` (D23)                           |
+
+### Si algo falla
+
+| Qué falla                                    | Qué pasa                                                                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| PostgreSQL no responde                       | `POST /reports` responde 503 y el formulario pide intentar de nuevo. `GET /status` sirve el último estado |
+| El contenedor se reinicia o Render lo duerme | `GET /status` responde 503 hasta la primera pasada del worker. Los reportes siguen en PostgreSQL          |
+| Redis no responde                            | Nada todavía: la API no usa Redis                                                                         |
+
+Ante una falla de la base, la escritura prioriza la consistencia y la lectura, la disponibilidad.
+La tabla completa está en [Arquitectura](docs/arquitectura.md#si-algo-falla).
+
+## Despliegue
+
+El sistema está desplegado y responde desde Internet. El 22-10-2026, un reporte enviado desde un
+teléfono apareció en la pantalla de estado.
 
 | Pieza    | URL                                           | Dónde corre                |
 | -------- | --------------------------------------------- | -------------------------- |
@@ -14,6 +146,76 @@ Proyecto integrador de Computación en la Nube (INFO-02028), UCAB, 2026.
 
 La API corre en el plan gratuito de Render: se duerme tras un rato sin tráfico, y la primera petición
 después puede tardar 50 segundos o más. `/health` dice si la API llega a la base de datos.
+
+Vercel despliega el frontend en cada push a `main`. El job `deploy` del CI despliega la API en
+Render y comprueba `/health` después (D23). Cada etapa está en [CI y despliegue](#ci-y-despliegue).
+
+## Contenedor
+
+La API es el único componente que corre en Docker (D2), y el worker corre dentro de ella. El
+archivo es [`apps/api/Dockerfile`](apps/api/Dockerfile).
+
+- **Imagen.** Un sistema de archivos con Node.js, el código compilado y sus dependencias. Se
+  construye una vez y no cambia.
+- **Contenedor.** Una imagen en ejecución. Render arranca un contenedor desde la imagen en cada
+  despliegue; en local lo arranca `docker run`.
+
+| Etapa     | Parte de         | Qué hace                                                                                                     |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| `base`    | `node:24-alpine` | Activa `corepack`, que instala la versión de pnpm fijada en `package.json`                                   |
+| `build`   | `base`           | Instala las dependencias, compila TypeScript a `dist/` y arma en `/out` una copia con solo las de producción |
+| `runtime` | `node:24-alpine` | Copia `/out`, fija `NODE_ENV=production`, cambia al usuario `node` y arranca `node dist/server.js`           |
+
+Solo `runtime` llega a producción. Parte de cero, así que no trae el compilador ni las herramientas
+de prueba. El proceso no corre como `root`.
+
+**Puerto.** La API escucha en el puerto de la variable `PORT`, y en `3000` si no está definida.
+Render define `PORT` para cada servicio. La API escucha en `0.0.0.0`: con `127.0.0.1`, ni
+`docker run` ni Render podrían llegar a ella. `HEALTHCHECK` llama a `/health` cada 30 s.
+
+| Variable             | Valor por defecto            | Para qué sirve                                                         |
+| -------------------- | ---------------------------- | ---------------------------------------------------------------------- |
+| `DATABASE_URL`       | sin valor: la API no arranca | URL de PostgreSQL. En producción, la del pooler de Supabase            |
+| `PORT`               | `3000`                       | Puerto en el que escucha la API. Render lo define                      |
+| `HOST`               | `0.0.0.0`                    | Interfaz en la que escucha la API                                      |
+| `LOG_LEVEL`          | `info`                       | Nivel de detalle de los logs: `debug`, `info`, `warn` o `error`        |
+| `CORS_ORIGIN`        | sin valor: CORS apagado      | Dominio del frontend que puede llamar a la API desde el navegador      |
+| `NODE_ENV`           | `production` en la imagen    | El Dockerfile la fija; no hace falta pasarla                           |
+| `DB_POOL_MAX`        | `10`                         | Conexiones a PostgreSQL como máximo, de 1 a 15 (el límite de Supabase) |
+| `STATUS_INTERVAL_MS` | `30000`                      | Cada cuántos milisegundos el worker recalcula el estado                |
+
+Los valores reales viven en las variables del servicio de Render, nunca en la imagen ni en el
+repositorio. Para construir y correr la imagen desde la raíz del repositorio:
+
+```sh
+docker build -f apps/api/Dockerfile -t mcb-api .
+docker compose up -d --wait postgres
+docker run --rm --network host -e DATABASE_URL=postgresql://mcb:mcb@localhost:5432/mcb mcb-api
+curl localhost:3000/health   # {"status":"ok","database":"ok"}
+```
+
+El contexto de construcción es la raíz, porque el lockfile y el workspace viven ahí. En macOS o
+Windows, usa `-p 3000:3000` y, en la URL, `host.docker.internal` en vez de `localhost`. La
+explicación completa está en [Contenedor](docs/contenedor.md).
+
+## Modelos de servicio
+
+Ninguna pieza usa IaaS: nadie del equipo administra un servidor, un sistema operativo ni una red.
+El equipo solo entrega código, una imagen o datos.
+
+| Pieza               | Plataforma            | Modelo | Por qué este modelo                                                                              |
+| ------------------- | --------------------- | ------ | ------------------------------------------------------------------------------------------------ |
+| Frontend            | Vercel Hobby          | PaaS   | Los archivos estáticos se sirven desde la CDN y aguantan un pico de lecturas sin ejecutar código |
+| API y worker        | Render (Docker)       | PaaS   | Corre nuestra imagen sin administrar una máquina. El plan gratuito cubre un servicio             |
+| Base de datos       | Supabase PostgreSQL   | DBaaS  | Una base relacional administrada y gratuita para la fuente de verdad                             |
+| Caché y límites     | Upstash Redis         | DBaaS  | Cobra por comando, así que sin tráfico no consume. No hay un servidor de Redis que mantener      |
+| CAPTCHA             | Cloudflare Turnstile  | SaaS   | Construir un CAPTCHA propio no tiene sentido para el problema                                    |
+| Errores y monitoreo | Sentry y Better Stack | SaaS   | El producto listo cuesta $0 en sus planes gratuitos                                              |
+| CI/CD               | GitHub Actions        | SaaS   | Gratis en un repositorio público, junto al código (D6)                                           |
+
+PaaS: plataforma como servicio. DBaaS: base de datos como servicio. SaaS: software como servicio.
+Qué administra cada plataforma y qué administra el equipo está en
+[Arquitectura](docs/arquitectura.md#modelos-de-servicio).
 
 ## Documentos
 
@@ -28,38 +230,6 @@ después puede tardar 50 segundos o más. `/health` dice si la API llega a la ba
 | [Calidad](docs/calidad.md)                                   | Qué control hace cumplir cada regla y la prueba de que falla      |
 | [Datos](docs/datos.md)                                       | Qué guarda cada tabla de PostgreSQL y qué componente tiene estado |
 | [Decisiones](docs/decisiones.md)                             | Qué se eligió, por qué y qué se descartó                          |
-
-## Arquitectura
-
-El detalle de cada componente y su modelo de servicio está en [Arquitectura](docs/arquitectura.md).
-
-```
-Navegador ──> Frontend (SvelteKit estático, CDN de Vercel)
-                 │
-                 ▼
-              API (Fastify, Docker, Render) ── worker (intervalo en el mismo proceso)
-                 │                │
-                 ▼                ▼
-          Upstash Redis     Supabase PostgreSQL
-        (caché, límites)    (fuente de verdad)
-```
-
-| Pieza         | Plataforma          | Modelo de servicio |
-| ------------- | ------------------- | ------------------ |
-| Frontend      | Vercel Hobby        | PaaS               |
-| API, worker   | Render (Docker)     | PaaS               |
-| Base de datos | Supabase PostgreSQL | DBaaS              |
-| Caché         | Upstash Redis       | DBaaS              |
-| CI            | GitHub Actions      | SaaS               |
-
-## Estructura
-
-```
-apps/
-  api/   API en Fastify con TypeScript, empaquetada con Docker
-  web/   Frontend en SvelteKit, compilado a archivos estáticos
-docs/    Enunciado, propuesta, requisitos y decisiones
-```
 
 ## Equipo
 
@@ -85,6 +255,21 @@ coincide con un label `area:`.
 
 Cada integrante elige su rol, pone su usuario de GitHub en esta tabla en un PR y se asigna los
 issues de su label.
+
+---
+
+Lo que sigue es para quien trabaja en el repositorio: cómo levantarlo, cómo probarlo y las reglas
+que hace cumplir el CI.
+
+## Estructura
+
+```
+apps/
+  api/      API en Fastify con TypeScript, empaquetada con Docker
+  web/      Frontend en SvelteKit, compilado a archivos estáticos
+tooling/    Pruebas del contrato del repositorio y scripts de métricas
+docs/       Enunciado, propuesta, requisitos y decisiones
+```
 
 ## Requisitos para desarrollar
 
@@ -137,13 +322,7 @@ docker compose exec redis redis-cli
 | `pnpm coverage:ratchet`  | Corre `pnpm test` y sube el piso de cobertura a lo medido, con la fecha de hoy                     |
 | `pnpm measure:functions` | Mide parámetros, niveles de bloques y líneas de cada función de producción (JSON)                  |
 
-Para construir y correr la imagen de la API desde la raíz del repositorio:
-
-```sh
-docker build -f apps/api/Dockerfile -t mcb-api .
-docker run --rm --network host -e DATABASE_URL=postgresql://mcb:mcb@localhost:5432/mcb mcb-api
-curl localhost:3000/health   # {"status":"ok","database":"ok"}
-```
+Para construir y correr la imagen de la API, ver [Contenedor](#contenedor).
 
 ### Pruebas en navegador
 
